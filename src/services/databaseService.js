@@ -4,13 +4,13 @@ class DatabaseService {
     
     static async storeMessage(messageObj) {
         try {
-            console.log('💾 Storing message in database...');
-            console.log('Message Object:', JSON.stringify(messageObj, null, 2));
+            console.log('💾 Storing message in database (Not implemented currently)...');
+            // console.log('Message Object:', JSON.stringify(messageObj, null, 2));
             
             // TODO: Implement Firebase storage here
             // For now, we'll just log the message
-            
-            console.log('✅ Message stored successfully');
+
+            console.log('Simulation: Message stored successfully');
             return { success: true, id: messageObj.messageId };
             
         } catch (error) {

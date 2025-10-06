@@ -3,14 +3,14 @@ const axios = require('axios');
 class AIService {
     constructor() {
         // Use environment variables with fallbacks
-        this.baseURL = process.env.AI_API_BASE_URL || 'https://platformbertsolutions-213643327387-asia-south1-run.app';
-        this.endpoint = process.env.AI_API_ENDPOINT || '/whatsapp';
-        this.timeout = parseInt(process.env.AI_API_TIMEOUT) || 30000;
+        this.baseURL = process.env.AI_API_BASE_URL;
+        this.endpoint = process.env.AI_API_ENDPOINT;
+        this.timeout = parseInt(process.env.AI_API_TIMEOUT);
         
-        console.log('🔧 AI Service initialized:');
-        console.log(`   Base URL: ${this.baseURL}`);
-        console.log(`   Endpoint: ${this.endpoint}`);
-        console.log(`   Timeout: ${this.timeout}ms`);
+        // console.log('🔧 AI Service initialized:');
+        // console.log(`   Base URL: ${this.baseURL}`);
+        // console.log(`   Endpoint: ${this.endpoint}`);
+        // console.log(`   Timeout: ${this.timeout}ms`);
     }
     
     /**

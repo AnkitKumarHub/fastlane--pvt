@@ -12,8 +12,8 @@ class WhatsAppService {
             console.log(`📝 Type: ${type}`);
             
             const url = `https://graph.facebook.com/v20.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
-            console.log('🔗 API URL:', url);
-            console.log('📞 Phone Number ID:', process.env.WHATSAPP_PHONE_NUMBER_ID);
+            // console.log('🔗 API URL:', url);
+            // console.log('📞 Phone Number ID:', process.env.WHATSAPP_PHONE_NUMBER_ID);
             
             const payload = {
                 messaging_product: 'whatsapp',

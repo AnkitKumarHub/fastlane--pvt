@@ -9,13 +9,13 @@ class MessageProcessor {
     }
     
     static async processIncomingMessage(messageData) {
-        console.log('� === MESSAGE PROCESSOR STARTED ===');
-        console.log('�🔄 Processing incoming message...');
+        console.log('🚨 === MESSAGE PROCESSOR STARTED ===');
+        console.log('🔄 Processing incoming message...');
         console.log('📦 Message data received:', JSON.stringify(messageData, null, 2));
         
         // Create instance for AI service access
         const processor = new MessageProcessor();
-        console.log('✅ MessageProcessor instance created');
+        // console.log('✅ MessageProcessor instance created');
         
         try {
             // Extract message information
@@ -93,9 +93,9 @@ class MessageProcessor {
                 console.log('📝 Final message details:', JSON.stringify(messageObj, null, 2));
                 
                 // Store message in database (we'll implement this next)
-                console.log('💾 Storing message in database...');
+                console.log('Simulation: Storing message in database...');
                 await databaseService.storeMessage(messageObj);
-                console.log('✅ Message stored in database');
+                console.log('Simulation: Message stored in database');
                 
                 // Process ALL text messages with AI (removed the @bert/@ai trigger requirement)
                 if (messageObj.type === 'text' && messageObj.content.text.trim()) {
@@ -149,7 +149,7 @@ class MessageProcessor {
             console.log('⏳ Processing with AI...');
             
             // Format phone number and get AI response
-            console.log('📱 Formatting phone number...');
+            // console.log('📱 Formatting phone number...');
             const formattedPhone = this.aiService.formatPhoneNumber(messageObj.from);
             console.log('📱 Formatted phone:', formattedPhone);
             
@@ -166,7 +166,7 @@ class MessageProcessor {
             await whatsappService.sendMessage(messageObj.from, aiResponse);
             
             console.log('✅ AI response sent successfully');
-            console.log('🚨 === AI RESPONSE PROCESSING COMPLETE ===\n');
+            // console.log('🚨 === AI RESPONSE PROCESSING COMPLETE ===\n');
             
         } catch (error) {
             console.error('❌ === AI RESPONSE ERROR ===');
