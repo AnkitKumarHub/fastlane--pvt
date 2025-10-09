@@ -49,8 +49,8 @@ class DatabaseConnection {
       this.isConnected = true;
       console.log(`[DB] ✅ MongoDB Connected Successfully`);
       console.log(`[DB] 📍 Host: ${conn.connection.host}`);
-      console.log(`[DB] 🗄️  Database: ${conn.connection.name}`);
-      console.log(`[DB] 🔄 Pool Size: ${connectionOptions.maxPoolSize} connections`);
+      // console.log(`[DB] 🗄️  Database: ${conn.connection.name}`);
+      // console.log(`[DB] 🔄 Pool Size: ${connectionOptions.maxPoolSize} connections`);
       
       // Set up connection event listeners
       this.setupEventListeners();

@@ -22,15 +22,15 @@ class AIService {
     async sendMessageToAI(message, phoneNumber) {
         try {
             console.log('🤖 Sending message to AI API...');
-            console.log(`📞 Phone: ${phoneNumber}`);
-            console.log(`💬 Message: ${message}`);
+            // console.log(`📞 Phone: ${phoneNumber}`);
+            // console.log(`💬 Message: ${message}`);
             
             const requestBody = {
                 message: message,
                 phoneNumber: phoneNumber
             };
             
-            console.log('📦 Request body:', JSON.stringify(requestBody, null, 2));
+            // console.log('📦 Request body:', JSON.stringify(requestBody, null, 2));
             
             const config = {
                 method: 'POST',
@@ -45,23 +45,23 @@ class AIService {
             };
             
             console.log('🔄 Making AI API request:', config.url);
-            console.log('🔧 Request config:', {
-                method: config.method,
-                url: config.url,
-                headers: config.headers,
-                timeout: config.timeout
-            });
+            // console.log('🔧 Request config:', {
+            //     method: config.method,
+            //     url: config.url,
+            //     headers: config.headers,
+            //     timeout: config.timeout
+            // });
             
             const response = await axios(config);
             
             console.log('✅ AI API connection successful');
-            console.log('📊 Response status:', response.status);
-            console.log('📋 Response headers:', response.headers);
+            // console.log('📊 Response status:', response.status);
+            // console.log('📋 Response headers:', response.headers);
             
             // Process the streaming response
             const aiResponse = await this.processStreamingResponse(response.data);
             
-            console.log('✅ AI API response received');
+            // console.log('✅ AI API response received');
             console.log('🔍 Full AI Response:', aiResponse);
             
             return aiResponse;
@@ -108,11 +108,11 @@ class AIService {
             let buffer = '';
             let chunks = [];
             
-            console.log('🔄 Processing AI streaming response...');
+            console.log('Processing AI streaming response...');
             
             stream.on('data', (chunk) => {
                 const chunkStr = chunk.toString();
-                console.log('📥 Raw chunk received:', chunkStr);
+                console.log('Raw chunk received:', chunkStr);
                 
                 buffer += chunkStr;
                 
@@ -224,28 +224,28 @@ class AIService {
      * @returns {string} - Formatted phone number
      */
     formatPhoneNumber(phoneNumber) {
-        console.log(`📱 Original phone number: ${phoneNumber}`);
+        // console.log(`📱 Original phone number: ${phoneNumber}`);
         
         // Remove any non-digit characters
         let cleaned = phoneNumber.replace(/[^\d]/g, '');
-        console.log(`📱 After removing non-digits: ${cleaned}`);
+        // console.log(`📱 After removing non-digits: ${cleaned}`);
         
         // For Indian numbers, we need only the last 10 digits
         if (cleaned.startsWith('91') && cleaned.length === 12) {
             // Remove the '91' country code, keep only last 10 digits
             cleaned = cleaned.substring(2);
-            console.log(`📱 Removed India country code (91): ${cleaned}`);
+            // console.log(`📱 Removed India country code (91): ${cleaned}`);
         } else if (cleaned.startsWith('1') && cleaned.length === 11) {
             // For US numbers, remove country code '1'
             cleaned = cleaned.substring(1);
-            console.log(`📱 Removed US country code (1): ${cleaned}`);
+            // console.log(`📱 Removed US country code (1): ${cleaned}`);
         } else if (cleaned.length > 10) {
             // For any other long numbers, take last 10 digits
             cleaned = cleaned.slice(-10);
-            console.log(`📱 Taking last 10 digits: ${cleaned}`);
+            // console.log(`📱 Taking last 10 digits: ${cleaned}`);
         }
         
-        console.log(`📱 Final formatted phone: ${phoneNumber} → ${cleaned}`);
+        // console.log(`📱 Final formatted phone: ${phoneNumber} → ${cleaned}`);
         return cleaned;
     }
 }

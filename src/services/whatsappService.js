@@ -7,9 +7,9 @@ class WhatsAppService {
     static async sendMessage(to, message, type = 'text') {
         try {
             console.log('🚨 === WHATSAPP Send MESSAGE ===');
-            console.log(`📤 Preparing to send message to ${to}`);
-            console.log(`💬 Message: ${message}`);
-            console.log(`📝 Type: ${type}`);
+            // console.log(`📤 Preparing to send message to ${to}`);
+            // console.log(`💬 Message: ${message}`);
+            // console.log(`📝 Type: ${type}`);
             
             const url = `https://graph.facebook.com/v20.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
             // console.log('🔗 API URL:', url);
@@ -24,7 +24,7 @@ class WhatsAppService {
                 }
             };
             
-            console.log('📦 Request payload:', JSON.stringify(payload, null, 2));
+            // console.log('📦 Request payload:', JSON.stringify(payload, null, 2));
             
             const config = {
                 headers: {
@@ -33,19 +33,19 @@ class WhatsAppService {
                 }
             };
             
-            console.log('🔧 Request config (token masked):', JSON.stringify({
-                headers: {
-                    'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN ? process.env.WHATSAPP_ACCESS_TOKEN.substring(0, 20) + '...' : 'NOT_SET'}`,
-                    'Content-Type': config.headers['Content-Type']
-                }
-            }, null, 2));
+            // console.log('🔧 Request config (token masked):', JSON.stringify({
+            //     headers: {
+            //         'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN ? process.env.WHATSAPP_ACCESS_TOKEN.substring(0, 20) + '...' : 'NOT_SET'}`,
+            //         'Content-Type': config.headers['Content-Type']
+            //     }
+            // }, null, 2));
             
             console.log(`📡 Making API request to WhatsApp...`);
             
             const response = await axios.post(url, payload, config);
             
-            console.log('✅ WhatsApp API Response Status:', response.status);
-            console.log('✅ WhatsApp API Response Data:', JSON.stringify(response.data, null, 2));
+            // console.log('✅ WhatsApp API Response Status:', response.status);
+            // console.log('✅ WhatsApp API Response Data:', JSON.stringify(response.data, null, 2));
             console.log('🚨 === WHATSAPP SEND COMPLETE ===\n');
             
             return response.data;
@@ -75,12 +75,12 @@ class WhatsAppService {
      */
     static async downloadMedia(mediaId) {
         try {
-            console.log('🚨 === WHATSAPP MEDIA DOWNLOAD ===');
-            console.log(`📥 Downloading media with ID: ${mediaId}`);
+            // console.log('🚨 === WHATSAPP MEDIA DOWNLOAD ===');
+            // console.log(`📥 Downloading media with ID: ${mediaId}`);
             
             // Step 1: Get media URL from WhatsApp API
             const mediaUrlEndpoint = `https://graph.facebook.com/v20.0/${mediaId}`;
-            console.log('🔗 Getting media URL from:', mediaUrlEndpoint);
+            // console.log('🔗 Getting media URL from:', mediaUrlEndpoint);
             
             const mediaUrlResponse = await axios.get(mediaUrlEndpoint, {
                 headers: {
@@ -88,13 +88,13 @@ class WhatsAppService {
                 }
             });
             
-            console.log('✅ Media URL response:', JSON.stringify(mediaUrlResponse.data, null, 2));
+            // console.log('✅ Media URL response:', JSON.stringify(mediaUrlResponse.data, null, 2));
             const mediaUrl = mediaUrlResponse.data.url;
             const mimeType = mediaUrlResponse.data.mime_type;
             const fileSize = mediaUrlResponse.data.file_size;
             
             // Step 2: Download actual media file
-            console.log('📥 Downloading media file from:', mediaUrl);
+            // console.log('📥 Downloading media file from:', mediaUrl);
             const mediaResponse = await axios.get(mediaUrl, {
                 headers: {
                     'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`
@@ -104,8 +104,8 @@ class WhatsAppService {
             });
             
             console.log('✅ Media downloaded successfully');
-            console.log(`📊 File size: ${mediaResponse.data.byteLength} bytes`);
-            console.log(`📋 MIME type: ${mimeType}`);
+            // console.log(`📊 File size: ${mediaResponse.data.byteLength} bytes`);
+            // console.log(`📋 MIME type: ${mimeType}`);
             
             const result = {
                 buffer: Buffer.from(mediaResponse.data),

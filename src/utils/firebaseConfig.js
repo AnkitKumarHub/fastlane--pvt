@@ -52,8 +52,8 @@ class FirebaseConfig {
 
       this.isInitialized = true;
       console.log('[Firebase] ✅ Firebase Admin initialized successfully');
-      console.log(`[Firebase] 📦 Storage bucket: ${process.env.FIREBASE_STORAGE_BUCKET}`);
-      console.log('[Firebase] 🔐 Public read access configured');
+      // console.log(`[Firebase] 📦 Storage bucket: ${process.env.FIREBASE_STORAGE_BUCKET}`);
+      // console.log('[Firebase] 🔐 Public read access configured');
 
     } catch (error) {
       console.error('[Firebase] ❌ Initialization error:', error.message);

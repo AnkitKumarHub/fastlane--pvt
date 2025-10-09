@@ -13,7 +13,7 @@ class WebhookController {
         const token = req.query['hub.verify_token'];
         const challenge = req.query['hub.challenge'];
         
-        console.log('Verification details:', { mode, token, challenge });
+        // console.log('Verification details:', { mode, token, challenge });
         
         // Check if mode and token are correct
         if (mode === 'subscribe' && token === process.env.WEBHOOK_VERIFY_TOKEN) {
@@ -91,7 +91,7 @@ class WebhookController {
             }
             
             // Always respond with 200 to acknowledge receipt
-            console.log('📤 Sending 200 OK response to Meta');
+            // console.log('📤 Sending 200 OK response to Meta');
             res.status(200).send('Message received');
             console.log('🚨 === WEBHOOK PROCESSING COMPLETE ===\n');
             
