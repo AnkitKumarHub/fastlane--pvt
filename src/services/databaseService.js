@@ -1,34 +1,324 @@
-// For now, we'll just log messages. We'll add Firebase later.
+/**
+ * Database Service
+ * Main service that orchestrates all database operations and provides unified API
+ */
+
+const userService = require('./userService');
+const conversationService = require('./conversationService');
+const mediaService = require('./mediaService');
+const dbConnection = require('../utils/dbConnection');
+const logger = require('../utils/logger');
+const validator = require('../utils/validators');
+const constants = require('../utils/constants');
 
 class DatabaseService {
-    
-    static async storeMessage(messageObj) {
-        try {
-            console.log('💾 Storing message in database (Not implemented currently)...');
-            // console.log('Message Object:', JSON.stringify(messageObj, null, 2));
-            
-            // TODO: Implement Firebase storage here
-            // For now, we'll just log the message
+  constructor() {
+    this.userService = userService;
+    this.conversationService = conversationService;
+    this.mediaService = mediaService;
+    this.isInitialized = false;
+  }
 
-            console.log('Simulation: Message stored successfully');
-            return { success: true, id: messageObj.messageId };
-            
-        } catch (error) {
-            console.error('❌ Error storing message:', error);
-            throw error;
-        }
+  /**
+   * Initialize database connection and services
+   */
+  async initialize() {
+    try {
+      if (this.isInitialized) {
+        logger.info('DatabaseService', 'Already initialized');
+        return;
+      }
+
+      logger.info('DatabaseService', 'Initializing database services...');
+
+      // Initialize MongoDB connection
+      await dbConnection.connect();
+
+      // Initialize Firebase/Media service
+      mediaService.initialize();
+
+      this.isInitialized = true;
+      logger.success('DatabaseService', 'Database services initialized successfully');
+
+    } catch (error) {
+      logger.error('DatabaseService', `Failed to initialize database services: ${error.message}`, error);
+      throw error;
     }
-    
-    static async getMessages(phoneNumber, limit = 50) {
-        try {
-            console.log(`📖 Retrieving messages for ${phoneNumber}`);
-            // TODO: Implement Firebase retrieval
-            return [];
-        } catch (error) {
-            console.error('❌ Error retrieving messages:', error);
-            throw error;
-        }
+  }
+
+  /**
+   * Process incoming WhatsApp message (complete workflow)
+   */
+  async processIncomingMessage(whatsappId, messageData, mediaFile = null) {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      logger.webhook('INCOMING_MESSAGE', whatsappId, {
+        messageId: messageData.whatsappMessageId,
+        hasMedia: !!mediaFile
+      });
+
+      // Start transaction-like operation
+      const startTime = Date.now();
+
+      // 1. Find or create user
+      const user = await this.userService.findOrCreateUser({
+        whatsappId,
+        displayName: messageData.senderName || null,
+        phoneNumber: messageData.phoneNumber || whatsappId // Use whatsappId as phone number if not provided
+      });
+
+      // 2. Handle media upload if present
+      let mediaData = null;
+      if (mediaFile && mediaFile.buffer) {
+        mediaData = await this.mediaService.uploadMediaFile(
+          mediaFile.buffer,
+          whatsappId,
+          messageData.whatsappMessageId,
+          mediaFile.originalName,
+          mediaFile.mimeType
+        );
+      } else if (messageData.mediaUrl) {
+        // Media was already processed and uploaded, create minimal mediaData structure
+        mediaData = { 
+          url: messageData.mediaUrl,
+          type: messageData.mediaType || 'image', // Default to image if type not specified
+          mimeType: messageData.mimeType,
+          fileName: messageData.fileName || 'unknown',
+          fileSize: messageData.fileSize || 0
+        };
+      }
+
+      // 3. Prepare message data for storage
+      const messageForStorage = {
+        whatsappMessageId: messageData.whatsappMessageId,
+        direction: constants.MESSAGE_DIRECTION.INBOUND,
+        timestamp: messageData.timestamp || new Date(),
+        textContent: messageData.textContent || '',
+        mediaData: mediaData || undefined
+      };
+
+      // 4. Add message to conversation
+      const conversation = await this.conversationService.addMessage(whatsappId, messageForStorage);
+
+      // 5. Update user metrics
+      const updatedUser = await this.userService.updateUserMetrics(
+        whatsappId,
+        messageData.textContent || '[Media]',
+        1
+      );
+
+      const processingTime = Date.now() - startTime;
+
+      logger.performance('PROCESS_INCOMING_MESSAGE', processingTime, {
+        whatsappId,
+        messageId: messageData.whatsappMessageId,
+        hasMedia: !!mediaFile,
+        totalMessages: updatedUser.totalMessageCount
+      });
+
+      return {
+        user: updatedUser,
+        conversation,
+        mediaData,
+        processingTimeMs: processingTime
+      };
+
+    } catch (error) {
+      logger.error('DatabaseService', `Failed to process incoming message: ${error.message}`, error);
+      throw error;
     }
+  }
+
+  /**
+   * Process outgoing AI message (complete workflow)
+   */
+  async processOutgoingAiMessage(whatsappId, aiResponse, aiAuditData) {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      logger.ai('OUTGOING_MESSAGE', whatsappId, aiAuditData?.processingTimeMs, {
+        messageId: aiResponse.whatsappMessageId,
+        checkpointId: aiAuditData?.checkpointId
+      });
+
+      const startTime = Date.now();
+
+      // 1. Ensure user exists
+      const user = await this.userService.findUserByWhatsappId(whatsappId);
+      if (!user) {
+        throw new Error(`User with WhatsApp ID ${whatsappId} not found`);
+      }
+
+      // 2. Prepare message data for storage
+      const messageForStorage = {
+        whatsappMessageId: aiResponse.whatsappMessageId,
+        direction: constants.MESSAGE_DIRECTION.OUTBOUND_AI,
+        timestamp: aiResponse.timestamp || new Date(),
+        textContent: aiResponse.textContent || '',
+        aiAudit: aiAuditData ? {
+          checkpointId: aiAuditData.checkpointId,
+          processingTimeMs: aiAuditData.processingTimeMs
+        } : undefined
+      };
+
+      // 3. Add message to conversation
+      const conversation = await this.conversationService.addMessage(whatsappId, messageForStorage);
+
+      // 4. Update AI metrics
+      const updatedUser = await this.userService.updateAiMetrics(
+        whatsappId,
+        aiResponse.textContent || '[AI Response]',
+        1
+      );
+
+      const processingTime = Date.now() - startTime;
+
+      logger.performance('PROCESS_OUTGOING_AI_MESSAGE', processingTime, {
+        whatsappId,
+        messageId: aiResponse.whatsappMessageId,
+        totalMessages: updatedUser.totalMessageCount
+      });
+
+      return {
+        user: updatedUser,
+        conversation,
+        processingTimeMs: processingTime
+      };
+
+    } catch (error) {
+      logger.error('DatabaseService', `Failed to process outgoing AI message: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+
+
+
+
+  /**
+   * Health check for all services
+   */
+  async healthCheck() {
+    try {
+      const health = {
+        timestamp: new Date(),
+        services: {}
+      };
+
+      // Check MongoDB connection
+      try {
+        health.services.mongodb = {
+          status: dbConnection.isDbConnected() ? 'healthy' : 'unhealthy',
+          details: dbConnection.getConnectionStats()
+        };
+      } catch (error) {
+        health.services.mongodb = {
+          status: 'error',
+          error: error.message
+        };
+      }
+
+      // Check Firebase
+      try {
+        health.services.firebase = {
+          status: mediaService.bucket ? 'healthy' : 'unhealthy',
+          details: {
+            initialized: !!mediaService.bucket
+          }
+        };
+      } catch (error) {
+        health.services.firebase = {
+          status: 'error',
+          error: error.message
+        };
+      }
+
+      // Overall health
+      const allHealthy = Object.values(health.services).every(service => service.status === 'healthy');
+      health.overall = allHealthy ? 'healthy' : 'degraded';
+
+      logger.info('DatabaseService', `Health check completed`, {
+        overall: health.overall,
+        mongodb: health.services.mongodb.status,
+        firebase: health.services.firebase.status
+      });
+
+      return health;
+
+    } catch (error) {
+      logger.error('DatabaseService', `Health check failed: ${error.message}`, error);
+      return {
+        timestamp: new Date(),
+        overall: 'error',
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Graceful shutdown
+   */
+  async shutdown() {
+    try {
+      logger.info('DatabaseService', 'Shutting down database services...');
+
+      await dbConnection.disconnect();
+      
+      this.isInitialized = false;
+      
+      logger.success('DatabaseService', 'Database services shut down successfully');
+
+    } catch (error) {
+      logger.error('DatabaseService', `Error during shutdown: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  // Legacy methods for backward compatibility
+  static async storeMessage(messageObj) {
+    const service = new DatabaseService();
+    try {
+      await service.initialize();
+      
+      return await service.processIncomingMessage(
+        messageObj.from || messageObj.phoneNumber,
+        {
+          whatsappMessageId: messageObj.messageId || messageObj.id,
+          textContent: messageObj.text || messageObj.body,
+          timestamp: messageObj.timestamp ? new Date(messageObj.timestamp) : new Date(),
+          senderName: messageObj.senderName
+        }
+      );
+    } catch (error) {
+      logger.error('DatabaseService', 'Legacy storeMessage failed', error);
+      throw error;
+    }
+  }
+
+  static async getMessages(phoneNumber, limit = 50) {
+    const service = new DatabaseService();
+    try {
+      await service.initialize();
+      
+      const history = await service.conversationService.getConversationHistory(
+        phoneNumber,
+        limit
+      );
+      
+      return history.messages || [];
+    } catch (error) {
+      logger.error('DatabaseService', 'Legacy getMessages failed', error);
+      return [];
+    }
+  }
 }
 
-module.exports = DatabaseService;
+// Create singleton instance
+const databaseService = new DatabaseService();
+
+module.exports = databaseService;

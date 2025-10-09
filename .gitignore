@@ -1,5 +1,51 @@
+# Environment variables
 .env
-node_modules
-dist
+.env.local
+.env.production
 
-whatsappService_backup.js
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Firebase service account
+firebase-service-account.json
+*.json
+
+# Backup files
+
+
+*.backup
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+
+docs/
+STREAMLINED-ARCHITECTURE.md
+test-config.js
+test-database.js
