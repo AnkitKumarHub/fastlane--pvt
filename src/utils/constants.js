@@ -85,8 +85,7 @@ module.exports = {
     TIMEOUT: 30000,               // 30 seconds
     MAX_RETRIES: 3,
     RETRY_DELAY: 1000,            // 1 second
-    MAX_CONTEXT_LENGTH: 4000,     // Characters
-    DEFAULT_MODEL: 'gpt-3.5-turbo'
+    MAX_CONTEXT_LENGTH: 4000      // Characters
   },
 
   // Performance Thresholds

@@ -27,7 +27,8 @@ class AIService {
             
             const requestBody = {
                 message: message,
-                phoneNumber: phoneNumber
+                phoneNumber: phoneNumber,
+                isWhatsApp: true
             };
             
             // console.log('📦 Request body:', JSON.stringify(requestBody, null, 2));
