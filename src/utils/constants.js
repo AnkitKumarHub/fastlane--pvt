@@ -8,7 +8,6 @@ module.exports = {
   CONVERSATION_STATUS: {
     AI_ONLY: 'AI_ONLY',
     LIVE_AGENT: 'LIVE_AGENT',
-    CLOSED: 'CLOSED'
   },
 
   // Message Directions
@@ -78,6 +77,17 @@ module.exports = {
       'application/pdf', 'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ]
+  },
+
+  // Firebase Firestore Database 
+  FIRESTORE: {
+    COLLECTION_NAME: 'LynnwhatsAppChats',
+    SYNC_ENABLED: process.env.ENABLE_FIRESTORE_SYNC === 'true',
+    CONNECTION_TIMEOUT: 10000, // 10 seconds
+    MAX_RETRIES: 3,
+    RETRY_DELAY: 1000, // 1 second
+    BATCH_SIZE: 500, // Maximum batch operations
+    MAX_DOCUMENT_SIZE: 1048576 // 1MB per document
   },
 
   // AI Service Configuration

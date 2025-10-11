@@ -6,6 +6,7 @@
 const userService = require('./userService');
 const conversationService = require('./conversationService');
 const mediaService = require('./mediaService');
+const firestoreSyncService = require('./firestoreSyncService'); // Firestore sync
 const dbConnection = require('../utils/dbConnection');
 const logger = require('../utils/logger');
 const validator = require('../utils/validators');
@@ -34,8 +35,19 @@ class DatabaseService {
       // Initialize MongoDB connection
       await dbConnection.connect();
 
-      // Initialize Firebase/Media service
+      // Initialize Firebase/Media service (includes Firebase Admin with database URL)
       mediaService.initialize();
+
+      // Initialize Firestore Sync Service
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        try {
+          await firestoreSyncService.initialize();
+          logger.success('DatabaseService', 'Firestore sync service initialized');
+        } catch (error) {
+          logger.warn('DatabaseService', `Firestore sync initialization failed: ${error.message}`, error);
+          // Continue without Firestore sync - don't fail the main initialization
+        }
+      }
 
       this.isInitialized = true;
       logger.success('DatabaseService', 'Database services initialized successfully');
@@ -84,7 +96,7 @@ class DatabaseService {
         // Media was already processed and uploaded, create minimal mediaData structure
         mediaData = { 
           url: messageData.mediaUrl,
-          type: messageData.mediaType || 'image', // Default to image if type not specified
+          type: messageData.mediaType || 'Unknown Type', // Default to 'Unknown Type' if type not specified
           mimeType: messageData.mimeType,
           fileName: messageData.fileName || 'unknown',
           fileSize: messageData.fileSize || 0
@@ -118,6 +130,18 @@ class DatabaseService {
         hasMedia: !!mediaFile,
         totalMessages: updatedUser.totalMessageCount
       });
+
+      // Firestore complete conversation sync (non-blocking)
+      // This efficiently syncs both user updates and the new message in one operation
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncCompleteConversation(updatedUser, messageForStorage).catch(error => {
+          logger.warn('DatabaseService', 'Firestore complete conversation sync failed', { 
+            whatsappId,
+            messageId: messageData.whatsappMessageId,
+            error: error.message 
+          });
+        });
+      }
 
       return {
         user: updatedUser,
@@ -184,6 +208,17 @@ class DatabaseService {
         totalMessages: updatedUser.totalMessageCount
       });
 
+      // Firestore complete conversation sync (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncCompleteConversation(updatedUser, messageForStorage).catch(error => {
+          logger.warn('DatabaseService', 'Firestore AI message sync failed', { 
+            whatsappId,
+            messageId: aiResponse.whatsappMessageId,
+            error: error.message 
+          });
+        });
+      }
+
       return {
         user: updatedUser,
         conversation,
@@ -195,10 +230,6 @@ class DatabaseService {
       throw error;
     }
   }
-
-
-
-
 
   /**
    * Health check for all services
@@ -238,14 +269,37 @@ class DatabaseService {
         };
       }
 
+      // Check Firestore Database
+      try {
+        if (constants.FIRESTORE.SYNC_ENABLED) {
+          const firestoreHealth = await firestoreSyncService.healthCheck();
+          health.services.firestore = firestoreHealth;
+        } else {
+          health.services.firestore = {
+            status: 'disabled',
+            details: {
+              syncEnabled: false
+            }
+          };
+        }
+      } catch (error) {
+        health.services.firestore = {
+          status: 'error',
+          error: error.message
+        };
+      }
+
       // Overall health
-      const allHealthy = Object.values(health.services).every(service => service.status === 'healthy');
+      const allHealthy = Object.values(health.services).every(service => 
+        service.status === 'healthy' || service.status === 'disabled'
+      );
       health.overall = allHealthy ? 'healthy' : 'degraded';
 
       logger.info('DatabaseService', `Health check completed`, {
         overall: health.overall,
         mongodb: health.services.mongodb.status,
-        firebase: health.services.firebase.status
+        firebase: health.services.firebase.status,
+        firestore: health.services.firestore.status
       });
 
       return health;
@@ -266,6 +320,17 @@ class DatabaseService {
   async shutdown() {
     try {
       logger.info('DatabaseService', 'Shutting down database services...');
+
+      // Shutdown Firestore sync service
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        try {
+          await firestoreSyncService.shutdown();
+          logger.success('DatabaseService', 'Firestore sync service shut down');
+        } catch (error) {
+          logger.warn('DatabaseService', `Firestore sync shutdown warning: ${error.message}`, error);
+          // Continue with other shutdowns
+        }
+      }
 
       await dbConnection.disconnect();
       
@@ -300,22 +365,22 @@ class DatabaseService {
     }
   }
 
-  static async getMessages(phoneNumber, limit = 50) {
-    const service = new DatabaseService();
-    try {
-      await service.initialize();
+  // static async getMessages(phoneNumber, limit = 50) {
+  //   const service = new DatabaseService();
+  //   try {
+  //     await service.initialize();
       
-      const history = await service.conversationService.getConversationHistory(
-        phoneNumber,
-        limit
-      );
+  //     const history = await service.conversationService.getConversationHistory(
+  //       phoneNumber,
+  //       limit
+  //     );
       
-      return history.messages || [];
-    } catch (error) {
-      logger.error('DatabaseService', 'Legacy getMessages failed', error);
-      return [];
-    }
-  }
+  //     return history.messages || [];
+  //   } catch (error) {
+  //     logger.error('DatabaseService', 'Legacy getMessages failed', error);
+  //     return [];
+  //   }
+  // }
 }
 
 // Create singleton instance

@@ -7,6 +7,7 @@ const { User } = require('../models');
 const logger = require('../utils/logger');
 const validator = require('../utils/validators');
 const constants = require('../utils/constants');
+const firestoreSyncService = require('./firestoreSyncService'); // Firestore sync
 
 class UserService {
   constructor() {
@@ -37,6 +38,16 @@ class UserService {
         whatsappId: savedUser.whatsappId,
         userId: savedUser._id 
       });
+
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserCreation(savedUser).catch(error => {
+          logger.warn('UserService', 'Firestore user creation sync failed', { 
+            whatsappId: savedUser.whatsappId, 
+            error: error.message 
+          });
+        });
+      }
 
       return savedUser;
 
@@ -128,6 +139,16 @@ class UserService {
         newTotalCount: updatedUser.totalMessageCount
       });
 
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserMetricsUpdate(updatedUser, 'user').catch(error => {
+          logger.warn('UserService', 'Firestore user metrics sync failed', { 
+            whatsappId, 
+            error: error.message 
+          });
+        });
+      }
+
       return updatedUser;
 
     } catch (error) {
@@ -163,6 +184,16 @@ class UserService {
         newTotalCount: updatedUser.totalMessageCount
       });
 
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserMetricsUpdate(updatedUser, 'ai').catch(error => {
+          logger.warn('UserService', 'Firestore AI metrics sync failed', { 
+            whatsappId, 
+            error: error.message 
+          });
+        });
+      }
+
       return updatedUser;
 
     } catch (error) {
@@ -193,6 +224,16 @@ class UserService {
         oldStatus: user.conversationStatus,
         newStatus: updatedUser.conversationStatus
       });
+
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserStatusUpdate(updatedUser).catch(error => {
+          logger.warn('UserService', 'Firestore status update sync failed', { 
+            whatsappId, 
+            error: error.message 
+          });
+        });
+      }
 
       return updatedUser;
 
@@ -280,6 +321,16 @@ class UserService {
 
       logger.success('UserService', `User deactivated`, { whatsappId });
 
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserDeactivation(updatedUser).catch(error => {
+          logger.warn('UserService', 'Firestore deactivation sync failed', { 
+            whatsappId, 
+            error: error.message 
+          });
+        });
+      }
+
       return updatedUser;
 
     } catch (error) {
@@ -313,6 +364,16 @@ class UserService {
       }
 
       logger.success('UserService', `User reactivated`, { whatsappId });
+
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserReactivation(updatedUser).catch(error => {
+          logger.warn('UserService', 'Firestore reactivation sync failed', { 
+            whatsappId, 
+            error: error.message 
+          });
+        });
+      }
 
       return updatedUser;
 
@@ -361,6 +422,16 @@ class UserService {
         whatsappId,
         updatedFields: Object.keys(updateData)
       });
+
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserProfileUpdate(updatedUser, Object.keys(updateData)).catch(error => {
+          logger.warn('UserService', 'Firestore profile update sync failed', { 
+            whatsappId, 
+            error: error.message 
+          });
+        });
+      }
 
       return updatedUser;
 
