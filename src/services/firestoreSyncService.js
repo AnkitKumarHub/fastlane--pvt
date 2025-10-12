@@ -139,30 +139,8 @@ class FirestoreSyncService {
   }
 
   /**
-   * Sync message addition (called after MongoDB message addition)
-   */
-  async syncMessageAddition(whatsappId, mongoMessage) {
-    return this.executeSync('MESSAGE_ADDITION', async () => {
-      logger.info('FirestoreSyncService', 'Syncing message addition', { 
-        whatsappId,
-        messageId: mongoMessage.whatsappMessageId,
-        direction: mongoMessage.direction
-      });
-
-      const result = await firestoreMessageService.syncMessageAddition(whatsappId, mongoMessage);
-      
-      logger.success('FirestoreSyncService', 'Message addition sync completed', { 
-        whatsappId,
-        messageId: mongoMessage.whatsappMessageId,
-        success: !!result
-      });
-
-      return result;
-    });
-  }
-
-  /**
-   * Sync complete conversation (user + message) - most efficient for new messages
+   * Sync complete conversation (user + message) - efficient batch operation
+   * This syncs both user data and messages together for data consistency
    */
   async syncCompleteConversation(mongoUser, mongoMessage = null) {
     return this.executeSync('COMPLETE_CONVERSATION', async () => {

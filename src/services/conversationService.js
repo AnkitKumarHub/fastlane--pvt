@@ -7,7 +7,6 @@ const { Conversation } = require('../models');
 const logger = require('../utils/logger');
 const validator = require('../utils/validators');
 const constants = require('../utils/constants');
-const firestoreSyncService = require('./firestoreSyncService'); // Firestore sync
 
 class ConversationService {
   constructor() {
@@ -150,17 +149,9 @@ class ConversationService {
         totalMessages: updatedConversation.messages.length
       });
 
-      // Firestore sync hook (non-blocking)
-      // Note: We sync the message only here. User metrics are synced from userService.
-      if (constants.FIRESTORE.SYNC_ENABLED) {
-        firestoreSyncService.syncMessageAddition(conversationId, validatedMessageData).catch(error => {
-          logger.warn('ConversationService', 'Firestore message sync failed', { 
-            conversationId,
-            messageId: validatedMessageData.whatsappMessageId,
-            error: error.message 
-          });
-        });
-      }
+      // Note: Firestore sync happens at a higher level (databaseService)
+      // This ensures complete data consistency with user metrics
+      // See: databaseService.processIncomingMessage() and processOutgoingAIMessage()
 
       return updatedConversation;
 

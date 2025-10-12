@@ -24,56 +24,6 @@ class FirestoreMessageService {
   }
 
   /**
-   * Sync message addition to Firestore
-   */
-  async syncMessageAddition(whatsappId, mongoMessage) {
-    try {
-      if (!firestoreService.isReady()) {
-        logger.debug('FirestoreMessageService', 'Service not ready, skipping message sync');
-        return null;
-      }
-
-      if (!mongoMessage.whatsappMessageId) {
-        logger.warn('FirestoreMessageService', 'Message missing whatsappMessageId, skipping sync', { whatsappId });
-        return null;
-      }
-
-      logger.info('FirestoreMessageService', 'Syncing message addition to Firestore', { 
-        whatsappId,
-        messageId: mongoMessage.whatsappMessageId,
-        direction: mongoMessage.direction
-      });
-
-      // Transform MongoDB message to Firestore format
-      const firestoreMessageData = MongoToFirestoreTransformer.transformMessage(mongoMessage);
-      
-      // Validate transformed data
-      MongoToFirestoreTransformer.validateFirestoreMessage(firestoreMessageData);
-
-      // Save to Firestore (will use auto-generated document ID)
-      const result = await firestoreService.saveMessage(
-        whatsappId,
-        mongoMessage.whatsappMessageId,
-        firestoreMessageData
-      );
-
-      logger.success('FirestoreMessageService', 'Message synced successfully', { 
-        whatsappId,
-        whatsappMessageId: mongoMessage.whatsappMessageId,
-        firestoreMessageId: result?.firestoreMessageId,
-        direction: mongoMessage.direction
-      });
-
-      return result;
-
-    } catch (error) {
-      logger.warn('FirestoreMessageService', `Failed to sync message: ${error.message}`, error);
-      // Don't throw - Firestore sync failures should not block MongoDB operations
-      return null;
-    }
-  }
-
-  /**
    * Sync multiple messages in batch for better performance
    */
   async syncMessagesBatch(whatsappId, mongoMessages) {
