@@ -61,7 +61,7 @@ const messageSchema = new mongoose.Schema({
   
   direction: {
     type: String,
-    enum: Object.values(constants.MESSAGE_DIRECTION),
+    enum: ['inbound', 'outbound_ai', 'outbound_lm'],
     required: true,
     index: true
   },
@@ -77,6 +77,20 @@ const messageSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: constants.WHATSAPP_LIMITS.MESSAGE_LENGTH
+  },
+  
+  assignedLmId: {
+    type: String,
+    default: null,
+    trim: true
+  },
+  
+  clientMessageId: {
+    type: String,
+    default: null,
+    trim: true,
+    sparse: true,
+    maxlength: 100
   },
   
   mediaData: {
@@ -126,6 +140,7 @@ const conversationSchema = new mongoose.Schema({
 // Indexes for performance optimization
 conversationSchema.index({ conversationId: 1, 'messages.timestamp': -1 });
 conversationSchema.index({ 'messages.whatsappMessageId': 1 });
+conversationSchema.index({ 'messages.clientMessageId': 1 }, { unique: true, sparse: true });
 conversationSchema.index({ 'messages.direction': 1, 'messages.timestamp': -1 });
 conversationSchema.index({ createdAt: -1 });
 

@@ -20,7 +20,20 @@ class MongoToFirestoreTransformer {
       const firestoreUser = {
         displayName: mongoUser.displayName || null,
         phoneNumber: mongoUser.phoneNumber || null,
-        conversationStatus: mongoUser.conversationStatus || 'AI_ONLY',
+        conversationStatus: mongoUser.conversationStatus || 'AI',
+        assignedLmId: mongoUser.assignedLmId || null,
+        lastTakeover: mongoUser.lastTakeover ? {
+          timestamp: mongoUser.lastTakeover.timestamp ? 
+            admin.firestore.Timestamp.fromDate(mongoUser.lastTakeover.timestamp) : null,
+          lmId: mongoUser.lastTakeover.lmId || null,
+          lmName: mongoUser.lastTakeover.lmName || null
+        } : null,
+        lastRelease: mongoUser.lastRelease ? {
+          timestamp: mongoUser.lastRelease.timestamp ? 
+            admin.firestore.Timestamp.fromDate(mongoUser.lastRelease.timestamp) : null,
+          lmId: mongoUser.lastRelease.lmId || null,
+          lmName: mongoUser.lastRelease.lmName || null
+        } : null,
         isActive: mongoUser.isActive !== undefined ? mongoUser.isActive : true,
         totalMessageCount: mongoUser.totalMessageCount || 0,
         userMetrics: {
@@ -34,6 +47,12 @@ class MongoToFirestoreTransformer {
           lastMessageTimestamp: mongoUser.aiMetrics?.lastMessageTimestamp ? 
             admin.firestore.Timestamp.fromDate(mongoUser.aiMetrics.lastMessageTimestamp) : null,
           messageCount: mongoUser.aiMetrics?.messageCount || 0
+        },
+        lmMetrics: {
+          lastMessage: mongoUser.lmMetrics?.lastMessage || '',
+          lastMessageTimestamp: mongoUser.lmMetrics?.lastMessageTimestamp ? 
+            admin.firestore.Timestamp.fromDate(mongoUser.lmMetrics.lastMessageTimestamp) : null,
+          messageCount: mongoUser.lmMetrics?.messageCount || 0
         },
         createdAt: mongoUser.createdAt ? 
           admin.firestore.Timestamp.fromDate(mongoUser.createdAt) : admin.firestore.Timestamp.now(),
@@ -65,6 +84,8 @@ class MongoToFirestoreTransformer {
         timestamp: mongoMessage.timestamp ? 
           admin.firestore.Timestamp.fromDate(mongoMessage.timestamp) : admin.firestore.Timestamp.now(),
         textContent: mongoMessage.textContent || '',
+        assignedLmId: mongoMessage.assignedLmId || null,  // LM assignment tracking
+        clientMessageId: mongoMessage.clientMessageId || null,  // Idempotency tracking
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now()
       };
@@ -226,7 +247,7 @@ class MongoToFirestoreTransformer {
    * Validate transformed Firestore user structure
    */
   static validateFirestoreUser(firestoreUser) {
-    const requiredFields = ['conversationStatus', 'isActive', 'totalMessageCount', 'userMetrics', 'aiMetrics'];
+    const requiredFields = ['conversationStatus', 'isActive', 'totalMessageCount', 'userMetrics', 'aiMetrics', 'lmMetrics'];
     
     for (const field of requiredFields) {
       if (firestoreUser[field] === undefined) {
@@ -236,7 +257,7 @@ class MongoToFirestoreTransformer {
 
     // Validate metrics structure
     const metricsFields = ['messageCount'];
-    ['userMetrics', 'aiMetrics'].forEach(metricsType => {
+    ['userMetrics', 'aiMetrics', 'lmMetrics'].forEach(metricsType => {
       for (const field of metricsFields) {
         if (firestoreUser[metricsType][field] === undefined) {
           throw new Error(`Required field '${field}' is missing from ${metricsType}`);

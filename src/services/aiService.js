@@ -17,18 +17,21 @@ class AIService {
      * Send message to AI API and handle streaming response
      * @param {string} message - The user message
      * @param {string} phoneNumber - User's phone number
+     * @param {string} conversationStatus - Conversation status ('AI' or 'HUMAN')
      * @returns {Promise<string>} - Complete AI response content
      */
-    async sendMessageToAI(message, phoneNumber) {
+    async sendMessageToAI(message, phoneNumber, conversationStatus = 'AI') {
         try {
             console.log('🤖 Sending message to AI API...');
+            console.log('📊 Conversation Status:', conversationStatus);
             // console.log(`📞 Phone: ${phoneNumber}`);
             // console.log(`💬 Message: ${message}`);
             
             const requestBody = {
                 message: message,
                 phoneNumber: phoneNumber,
-                isWhatsApp: true
+                isWhatsApp: true,
+                conversationStatus: conversationStatus  
             };
             
             // console.log('📦 Request body:', JSON.stringify(requestBody, null, 2));
@@ -251,6 +254,7 @@ class AIService {
     }
 }
 
-module.exports = AIService;
+// Create singleton instance (consistent with other services)
+const aiService = new AIService();
 
-// module.exports = AIService;
+module.exports = aiService;

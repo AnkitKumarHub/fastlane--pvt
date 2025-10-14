@@ -6,15 +6,15 @@
 module.exports = {
   // Conversation Status
   CONVERSATION_STATUS: {
-    AI_ONLY: 'AI_ONLY',
-    LIVE_AGENT: 'LIVE_AGENT',
+    AI: 'AI',
+    HUMAN: 'HUMAN',
   },
 
   // Message Directions
   MESSAGE_DIRECTION: {
     INBOUND: 'inbound',
     OUTBOUND_AI: 'outbound_ai',
-    OUTBOUND_AGENT: 'outbound_agent'
+    OUTBOUND_LM: 'outbound_lm'
   },
 
   // Media Types
@@ -120,6 +120,11 @@ module.exports = {
       MIN_LENGTH: 10,
       MAX_LENGTH: 150,
       PATTERN: /^[a-zA-Z0-9._\-=+/]+$/
+    },
+    CLIENT_MESSAGE_ID: {
+      MIN_LENGTH: 10,
+      MAX_LENGTH: 100,
+      PATTERN: /^[a-zA-Z0-9_\-]+$/
     }
   },
 

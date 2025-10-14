@@ -31,9 +31,11 @@ app.use((req, res, next) => {
 
 // Import routes
 const webhookRoutes = require('./src/routes/webhookRoutes');
+const conversationRoutes = require('./src/routes/conversationRoutes');
 
 // Use routes
 app.use('/webhook', webhookRoutes);
+app.use('/api/conversation', conversationRoutes);
 
 // Health check endpoint with database status
 app.get('/health', async (req, res) => {

@@ -203,6 +203,51 @@ class UserService {
   }
 
   /**
+   * Update LM metrics for outbound LM messages (atomic operation)
+   */
+  async updateLmMetrics(whatsappId, messageText, increment = 1) {
+    try {
+      validator.validateWhatsappId(whatsappId);
+      validator.validateTextContent(messageText);
+
+      logger.database('UPDATE_METRICS', this.modelName, { 
+        whatsappId, 
+        type: 'lm',
+        increment 
+      });
+
+      const user = await User.findOne({ whatsappId });
+      if (!user) {
+        throw new Error(`User with WhatsApp ID ${whatsappId} not found`);
+      }
+
+      const updatedUser = await user.updateLmMetrics(messageText, increment);
+
+      logger.success('UserService', `LM metrics updated`, {
+        whatsappId,
+        newLmMessageCount: updatedUser.lmMetrics.messageCount,
+        newTotalCount: updatedUser.totalMessageCount
+      });
+
+      // Firestore sync hook (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncUserMetricsUpdate(updatedUser, 'lm').catch(error => {
+          logger.warn('UserService', 'Firestore LM metrics sync failed', { 
+            whatsappId, 
+            error: error.message 
+          });
+        });
+      }
+
+      return updatedUser;
+
+    } catch (error) {
+      logger.error('UserService', `Failed to update LM metrics: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Update conversation status
    */
   async updateConversationStatus(whatsappId, newStatus) {
@@ -437,6 +482,76 @@ class UserService {
 
     } catch (error) {
       logger.error('UserService', `Failed to update user profile: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update conversation control (status and LM assignment)
+   */
+  async updateConversationControl(whatsappId, updateData) {
+    try {
+      validator.validateWhatsappId(whatsappId);
+      
+      logger.database('UPDATE_CONVERSATION_CONTROL', this.modelName, { 
+        whatsappId,
+        status: updateData.conversationStatus 
+      });
+
+      const user = await User.findOneAndUpdate(
+        { whatsappId },
+        { 
+          $set: {
+            ...updateData,
+            updatedAt: new Date()
+          }
+        },
+        { 
+          new: true,
+          runValidators: true
+        }
+      );
+
+      if (!user) {
+        throw new Error(`User with WhatsApp ID ${whatsappId} not found`);
+      }
+
+      logger.success('UserService', 'Conversation control updated', {
+        whatsappId,
+        conversationStatus: user.conversationStatus,
+        assignedLmId: user.assignedLmId
+      });
+
+      return user;
+
+    } catch (error) {
+      logger.error('UserService', `Failed to update conversation control: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get user's conversation status
+   */
+  async getConversationStatus(whatsappId) {
+    try {
+      validator.validateWhatsappId(whatsappId);
+      
+      const user = await this.findUserByWhatsappId(whatsappId);
+      
+      if (!user) {
+        return null;
+      }
+
+      return {
+        conversationStatus: user.conversationStatus,
+        assignedLmId: user.assignedLmId,
+        lastTakeover: user.lastTakeover,
+        lastRelease: user.lastRelease
+      };
+
+    } catch (error) {
+      logger.error('UserService', `Failed to get conversation status: ${error.message}`, error);
       throw error;
     }
   }

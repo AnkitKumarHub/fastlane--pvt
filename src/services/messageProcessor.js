@@ -1,12 +1,13 @@
 const whatsappService = require('./whatsappService');
 const databaseService = require('./databaseService');
 const mediaService = require('./mediaService');
-const AIService = require('./aiService');
+const aiService = require('./aiService');
+const constants = require('../utils/constants');
 
 class MessageProcessor {
     
     constructor() {
-        this.aiService = new AIService();
+        this.aiService = aiService;
     }
     
     static async processIncomingMessage(messageData) {
@@ -295,62 +296,73 @@ class MessageProcessor {
     async processAIResponse(messageObj) {
         try {
             console.log('🚨 === AI RESPONSE PROCESSING STARTED ===');
-            // console.log('🤖 AI response triggered for message:', messageObj.messageId);
-            // console.log('📱 From phone:', messageObj.from);
-            // console.log('💬 User message:', messageObj.content.text);
             
-            // Show typing indicator (optional enhancement)
-            // console.log('⏳ Processing with AI...');
+            const whatsappId = messageObj.from;
+            
+            // ✅ Check conversation status BEFORE processing
+            const user = await databaseService.userService.findUserByWhatsappId(whatsappId);
+            const conversationStatus = user?.conversationStatus || constants.CONVERSATION_STATUS.AI;
+            
+            console.log('📊 Conversation Status:', conversationStatus);
+            if (user?.assignedLmId) {
+                console.log('👤 Assigned LM:', user.assignedLmId);
+            }
             
             // Format phone number and get AI response
-            // console.log('📱 Formatting phone number...');
-            const formattedPhone = this.aiService.formatPhoneNumber(messageObj.from);
-            // console.log('📱 Formatted phone:', formattedPhone);
+            const formattedPhone = this.aiService.formatPhoneNumber(whatsappId);
             
-            // console.log('🔄 Calling AI service...');
+            // ✅ Pass conversationStatus as 4th parameter
             const aiResponse = await this.aiService.sendMessageToAI(
-                messageObj.content.text, 
-                formattedPhone
+                messageObj.content.text,
+                formattedPhone,
+                conversationStatus  
             );
+            
             console.log('✅ AI service returned response');
             console.log('🎯 AI Response ready:', aiResponse);
             
-            // Send AI response back to user
-            // console.log('📤 Sending AI response to WhatsApp...');
-            const whatsappResponse = await whatsappService.sendMessage(messageObj.from, aiResponse);
-            // console.log('✅ AI response sent successfully');
-            // console.log('📨 WhatsApp response:', JSON.stringify(whatsappResponse, null, 2));
-            
-            // Store AI response in database
-            if (whatsappResponse && whatsappResponse.messages && whatsappResponse.messages[0]) {
-                const aiMessageId = whatsappResponse.messages[0].id;
-                console.log('💾 Storing AI response in database...');
+            // ✅ Only send message to user if status is AI
+            if (conversationStatus === constants.CONVERSATION_STATUS.AI) {
+                console.log('📤 Sending AI response to WhatsApp (AI mode)...');
                 
-                try {
-                    const aiAuditData = {
-                        checkpointId: `ai_${Date.now()}`,
-                        processingTimeMs: Date.now() - new Date(messageObj.timestamp).getTime()
-                    };
+                const whatsappResponse = await whatsappService.sendMessage(messageObj.from, aiResponse);
+                
+                // Store AI response in database
+                if (whatsappResponse && whatsappResponse.messages && whatsappResponse.messages[0]) {
+                    const aiMessageId = whatsappResponse.messages[0].id;
+                    console.log('💾 Storing AI response in database...');
                     
-                    await databaseService.processOutgoingAiMessage(
-                        messageObj.from,
-                        {
-                            whatsappMessageId: aiMessageId,
-                            textContent: aiResponse,
-                            timestamp: new Date()
-                        },
-                        aiAuditData
-                    );
-                    
-                    console.log('✅ AI response stored in database successfully');
-                } catch (dbError) {
-                    console.error('❌ Failed to store AI response in database:', dbError.message);
-                    // Continue - don't fail the entire process if DB storage fails
+                    try {
+                        const aiAuditData = {
+                            checkpointId: `ai_${Date.now()}`,
+                            processingTimeMs: Date.now() - new Date(messageObj.timestamp).getTime()
+                        };
+                        
+                        await databaseService.processOutgoingAiMessage(
+                            messageObj.from,
+                            {
+                                whatsappMessageId: aiMessageId,
+                                textContent: aiResponse,
+                                timestamp: new Date()
+                            },
+                            aiAuditData
+                        );
+                        
+                        console.log('✅ AI response stored in database successfully');
+                    } catch (dbError) {
+                        console.error('❌ Failed to store AI response in database:', dbError.message);
+                    }
+                } else {
+                    console.error('⚠️ No message ID received from WhatsApp API for AI response');
                 }
-            } else {
-                console.error('⚠️ No message ID received from WhatsApp API for AI response');
+                
+            } else if (conversationStatus === constants.CONVERSATION_STATUS.HUMAN) {
+                console.log('� HUMAN mode active - AI context updated, no message sent to user');
+                console.log('⏳ Waiting for LM to respond manually...');
+                
+                // AI has updated its context but does NOT reply
+                // LM will handle the response manually via NOC dashboard
             }
-            // console.log('🚨 === AI RESPONSE PROCESSING COMPLETE ===\n');
             
         } catch (error) {
             console.error('❌ === AI RESPONSE ERROR ===');
@@ -358,13 +370,13 @@ class MessageProcessor {
             console.error('Error stack:', error.stack);
             console.error('❌ === END AI RESPONSE ERROR ===');
             
-            // Send fallback message to user
-            const fallbackMessage = "I'm sorry, I'm having technical difficulties right now. Please try again in a moment! 🔧";
-            
+            // Send fallback message only in AI mode
             try {
-                // console.log('📤 Sending fallback message...');
-                await whatsappService.sendMessage(messageObj.from, fallbackMessage);
-                // console.log('✅ Fallback message sent');
+                const user = await databaseService.userService.findUserByWhatsappId(messageObj.from);
+                if (user?.conversationStatus === constants.CONVERSATION_STATUS.AI) {
+                    const fallbackMessage = "I'm sorry, I'm having technical difficulties right now. Please try again in a moment!";
+                    await whatsappService.sendMessage(messageObj.from, fallbackMessage);
+                }
             } catch (fallbackError) {
                 console.error('❌ Failed to send fallback message:', fallbackError);
             }

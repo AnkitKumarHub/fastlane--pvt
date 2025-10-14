@@ -232,6 +232,127 @@ class DatabaseService {
   }
 
   /**
+   * Process outgoing LM message (complete workflow with idempotency)
+   */
+  async processOutgoingLmMessage(whatsappId, lmResponse, clientMessageId, lmId) {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      logger.info('DatabaseService', 'Processing outgoing LM message', {
+        whatsappId,
+        messageId: lmResponse.whatsappMessageId,
+        clientMessageId,
+        lmId
+      });
+
+      const startTime = Date.now();
+
+      // 1. Ensure user exists
+      const user = await this.userService.findUserByWhatsappId(whatsappId);
+      if (!user) {
+        throw new Error(`User with WhatsApp ID ${whatsappId} not found`);
+      }
+
+      // 2. Check idempotency before proceeding
+      const existingMessage = await this.conversationService.checkMessageIdempotency(
+        whatsappId,
+        clientMessageId
+      );
+
+      if (existingMessage) {
+        logger.warn('DatabaseService', 'Duplicate LM message detected, skipping processing', {
+          whatsappId,
+          clientMessageId,
+          existingMessageId: existingMessage.whatsappMessageId
+        });
+        
+        return {
+          user,
+          conversation: null,
+          processingTimeMs: Date.now() - startTime,
+          isDuplicate: true,
+          existingMessage
+        };
+      }
+
+      // 3. Prepare message data for storage
+      const messageForStorage = {
+        whatsappMessageId: lmResponse.whatsappMessageId,
+        direction: constants.MESSAGE_DIRECTION.OUTBOUND_LM,
+        timestamp: lmResponse.timestamp || new Date(),
+        textContent: lmResponse.textContent || '',
+        clientMessageId,
+        assignedLmId: lmId
+      };
+
+      // 4. Add LM message to conversation
+      const conversation = await this.conversationService.addLmMessage(
+        whatsappId,
+        messageForStorage,
+        clientMessageId,
+        lmId
+      );
+
+      // 5. Update LM metrics
+      const updatedUser = await this.userService.updateLmMetrics(
+        whatsappId,
+        lmResponse.textContent || '[LM Response]',
+        1
+      );
+
+      const processingTime = Date.now() - startTime;
+
+      logger.performance('PROCESS_OUTGOING_LM_MESSAGE', processingTime, {
+        whatsappId,
+        messageId: lmResponse.whatsappMessageId,
+        clientMessageId,
+        lmId,
+        totalMessages: updatedUser.totalMessageCount
+      });
+
+      // Firestore complete conversation sync (non-blocking)
+      if (constants.FIRESTORE.SYNC_ENABLED) {
+        firestoreSyncService.syncCompleteConversation(updatedUser, messageForStorage).catch(error => {
+          logger.warn('DatabaseService', 'Firestore LM message sync failed', { 
+            whatsappId,
+            messageId: lmResponse.whatsappMessageId,
+            error: error.message 
+          });
+        });
+      }
+
+      return {
+        user: updatedUser,
+        conversation,
+        processingTimeMs: processingTime,
+        isDuplicate: false
+      };
+
+    } catch (error) {
+      // Handle duplicate message error from unique index
+      if (error.message === 'DUPLICATE_MESSAGE') {
+        logger.warn('DatabaseService', 'Duplicate message caught at database level', {
+          whatsappId,
+          clientMessageId
+        });
+        
+        const user = await this.userService.findUserByWhatsappId(whatsappId);
+        return {
+          user,
+          conversation: null,
+          processingTimeMs: Date.now() - startTime,
+          isDuplicate: true
+        };
+      }
+
+      logger.error('DatabaseService', `Failed to process outgoing LM message: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Health check for all services
    */
   async healthCheck() {

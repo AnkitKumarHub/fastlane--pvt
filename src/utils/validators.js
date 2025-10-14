@@ -79,6 +79,30 @@ class Validator {
   }
 
   /**
+   * Validate client message ID (for idempotency)
+   */
+  validateClientMessageId(clientMessageId) {
+    if (!clientMessageId) {
+      throw new Error('Client message ID is required');
+    }
+
+    if (typeof clientMessageId !== 'string') {
+      throw new Error('Client message ID must be a string');
+    }
+
+    if (clientMessageId.length < this.patterns.CLIENT_MESSAGE_ID.MIN_LENGTH || 
+        clientMessageId.length > this.patterns.CLIENT_MESSAGE_ID.MAX_LENGTH) {
+      throw new Error(`Client message ID must be between ${this.patterns.CLIENT_MESSAGE_ID.MIN_LENGTH} and ${this.patterns.CLIENT_MESSAGE_ID.MAX_LENGTH} characters`);
+    }
+
+    if (!this.patterns.CLIENT_MESSAGE_ID.PATTERN.test(clientMessageId)) {
+      throw new Error('Client message ID can only contain alphanumeric characters, underscores, and hyphens');
+    }
+
+    return true;
+  }
+
+  /**
    * Validate conversation status
    */
   validateConversationStatus(status) {
@@ -327,6 +351,66 @@ class Validator {
         checkpointId: this.sanitizeString(messageData.aiAudit.checkpointId),
         processingTimeMs: Number(messageData.aiAudit.processingTimeMs) || 0
       } : undefined
+    };
+  }
+
+  /**
+   * Validate LM message send request
+   * Used for POST /api/conversation/lm/send endpoint
+   */
+  validateLmMessage(requestData) {
+    const errors = [];
+
+    // Validate phoneNumber
+    if (!requestData.phoneNumber) {
+      errors.push('phoneNumber is required');
+    } else {
+      try {
+        this.validatePhoneNumber(requestData.phoneNumber);
+      } catch (error) {
+        errors.push(`phoneNumber: ${error.message}`);
+      }
+    }
+
+    // Validate lmId
+    if (!requestData.lmId) {
+      errors.push('lmId is required');
+    } else if (typeof requestData.lmId !== 'string' || requestData.lmId.trim().length === 0) {
+      errors.push('lmId must be a non-empty string');
+    }
+
+    // Validate message
+    if (!requestData.message) {
+      errors.push('message is required');
+    } else {
+      try {
+        this.validateTextContent(requestData.message);
+      } catch (error) {
+        errors.push(`message: ${error.message}`);
+      }
+    }
+
+    // Validate clientMessageId
+    if (!requestData.clientMessageId) {
+      errors.push('clientMessageId is required');
+    } else {
+      try {
+        this.validateClientMessageId(requestData.clientMessageId);
+      } catch (error) {
+        errors.push(`clientMessageId: ${error.message}`);
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new Error(`LM message validation failed: ${errors.join(', ')}`);
+    }
+
+    // Sanitize and return validated data
+    return {
+      phoneNumber: this.sanitizeString(requestData.phoneNumber),
+      lmId: this.sanitizeString(requestData.lmId, 50),
+      message: this.sanitizeString(requestData.message, constants.WHATSAPP_LIMITS.MESSAGE_LENGTH),
+      clientMessageId: this.sanitizeString(requestData.clientMessageId, this.patterns.CLIENT_MESSAGE_ID.MAX_LENGTH)
     };
   }
 }

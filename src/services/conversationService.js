@@ -162,7 +162,126 @@ class ConversationService {
   }
 
   /**
-   * Get messages by direction (inbound, outbound_ai, outbound_agent)
+   * Check if a message with given clientMessageId already exists (idempotency check)
+   * Returns the existing message if found, null otherwise
+   */
+  async checkMessageIdempotency(conversationId, clientMessageId) {
+    try {
+      validator.validateWhatsappId(conversationId);
+      validator.validateClientMessageId(clientMessageId);
+
+      logger.database('CHECK_IDEMPOTENCY', this.modelName, { 
+        conversationId,
+        clientMessageId
+      });
+
+      const conversation = await Conversation.findOne({
+        conversationId,
+        'messages.clientMessageId': clientMessageId
+      }).select('messages.$');
+
+      if (conversation && conversation.messages.length > 0) {
+        const existingMessage = conversation.messages[0];
+        logger.warn('ConversationService', `Duplicate message detected`, {
+          conversationId,
+          clientMessageId,
+          existingMessageId: existingMessage.whatsappMessageId
+        });
+        return existingMessage;
+      }
+
+      logger.debug('ConversationService', `No duplicate found`, {
+        conversationId,
+        clientMessageId
+      });
+
+      return null;
+
+    } catch (error) {
+      logger.error('ConversationService', `Failed to check message idempotency: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add LM message to conversation (with idempotency support)
+   */
+  async addLmMessage(conversationId, messageData, clientMessageId, lmId) {
+    try {
+      validator.validateWhatsappId(conversationId);
+      validator.validateClientMessageId(clientMessageId);
+
+      // Prepare message data with LM-specific fields
+      const lmMessageData = {
+        ...messageData,
+        direction: constants.MESSAGE_DIRECTION.OUTBOUND_LM,
+        clientMessageId,
+        assignedLmId: lmId,
+        timestamp: new Date()
+      };
+
+      const validatedMessageData = validator.validateMessageInput(lmMessageData);
+
+      logger.database('ADD_LM_MESSAGE', this.modelName, { 
+        conversationId,
+        messageId: validatedMessageData.whatsappMessageId,
+        clientMessageId,
+        lmId
+      });
+
+      // Use upsert to create conversation if it doesn't exist
+      const update = {
+        $push: { 
+          messages: {
+            $each: [validatedMessageData],
+            $position: 0 // Add to beginning for better performance
+          }
+        },
+        $set: { 
+          lastUpdated: new Date() 
+        }
+      };
+
+      const options = {
+        new: true,
+        upsert: true, // Create if doesn't exist
+        runValidators: true,
+        setDefaultsOnInsert: true
+      };
+
+      const updatedConversation = await Conversation.findOneAndUpdate(
+        { conversationId },
+        update,
+        options
+      );
+
+      logger.success('ConversationService', `LM message added to conversation`, {
+        conversationId,
+        messageId: validatedMessageData.whatsappMessageId,
+        clientMessageId,
+        lmId,
+        totalMessages: updatedConversation.messages.length
+      });
+
+      return updatedConversation;
+
+    } catch (error) {
+      // Check for duplicate key error (unique index violation)
+      if (error.code === 11000 && error.keyPattern && error.keyPattern['messages.clientMessageId']) {
+        logger.warn('ConversationService', `Duplicate clientMessageId detected by database`, {
+          conversationId,
+          clientMessageId
+        });
+        throw new Error('DUPLICATE_MESSAGE');
+      }
+
+      logger.error('ConversationService', `Failed to add LM message: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get messages by direction (inbound, outbound_ai, outbound_lm)
    */
   async getMessagesByDirection(conversationId, direction, limit = constants.PAGINATION.DEFAULT_LIMIT) {
     try {

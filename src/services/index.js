@@ -7,10 +7,12 @@ const databaseService = require('./databaseService');
 const userService = require('./userService');
 const conversationService = require('./conversationService');
 const mediaService = require('./mediaService');
+const conversationControlService = require('./conversationControlService');
 
 module.exports = {
   databaseService,
   userService,
   conversationService,
-  mediaService
+  mediaService,
+  conversationControlService
 };

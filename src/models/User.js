@@ -50,8 +50,45 @@ const userSchema = new mongoose.Schema({
   conversationStatus: {
     type: String,
     enum: Object.values(constants.CONVERSATION_STATUS),
-    default: constants.CONVERSATION_STATUS.AI_ONLY,
+    default: constants.CONVERSATION_STATUS.AI,
     index: true
+  },
+  
+  assignedLmId: {
+    type: String,
+    default: null,
+    trim: true,
+    index: true
+  },
+  
+  lastTakeover: {
+    timestamp: {
+      type: Date,
+      default: null
+    },
+    lmId: {
+      type: String,
+      trim: true
+    },
+    lmName: {
+      type: String,
+      trim: true
+    }
+  },
+  
+  lastRelease: {
+    timestamp: {
+      type: Date,
+      default: null
+    },
+    lmId: {
+      type: String,
+      trim: true
+    },
+    lmName: {
+      type: String,
+      trim: true
+    }
   },
   
   isActive: {
@@ -84,6 +121,16 @@ const userSchema = new mongoose.Schema({
       lastMessage: '',
       lastMessageTimestamp: new Date()
     })
+  },
+  
+  // LM (Lifestyle Manager) message metrics
+  lmMetrics: {
+    type: metricsSchema,
+    default: () => ({
+      messageCount: 0,
+      lastMessage: '',
+      lastMessageTimestamp: new Date()
+    })
   }
 }, {
   timestamps: true,  // Adds createdAt and updatedAt automatically
@@ -93,14 +140,17 @@ const userSchema = new mongoose.Schema({
 
 // Indexes for performance optimization
 userSchema.index({ conversationStatus: 1, isActive: 1 });
+userSchema.index({ conversationStatus: 1, assignedLmId: 1 });
 userSchema.index({ updatedAt: -1 });
 userSchema.index({ 'userMetrics.lastMessageTimestamp': -1 });
 userSchema.index({ 'aiMetrics.lastMessageTimestamp': -1 });
 
 // Pre-save middleware for data validation and optimization
 userSchema.pre('save', function(next) {
-  // Ensure total message count is sum of user and AI messages
-  this.totalMessageCount = this.userMetrics.messageCount + this.aiMetrics.messageCount;
+  // Ensure total message count is sum of user, AI, and LM messages
+  this.totalMessageCount = this.userMetrics.messageCount + 
+                           this.aiMetrics.messageCount + 
+                           this.lmMetrics.messageCount;
   
   // Update the main updatedAt timestamp
   this.updatedAt = new Date();
@@ -192,6 +242,28 @@ userSchema.methods = {
       $set: {
         'aiMetrics.lastMessage': lastMessage,
         'aiMetrics.lastMessageTimestamp': new Date(),
+        'updatedAt': new Date()
+      }
+    };
+
+    return await this.constructor.findByIdAndUpdate(this._id, update, { 
+      new: true, 
+      runValidators: true 
+    });
+  },
+
+  /**
+   * Update LM message metrics atomically
+   */
+  async updateLmMetrics(lastMessage, increment = 1) {
+    const update = {
+      $inc: { 
+        'lmMetrics.messageCount': increment,
+        'totalMessageCount': increment
+      },
+      $set: {
+        'lmMetrics.lastMessage': lastMessage,
+        'lmMetrics.lastMessageTimestamp': new Date(),
         'updatedAt': new Date()
       }
     };
