@@ -18,12 +18,14 @@ class AIService {
      * @param {string} message - The user message
      * @param {string} phoneNumber - User's phone number
      * @param {string} conversationStatus - Conversation status ('AI' or 'HUMAN')
+     * @param {string} direction - Message direction ('inbound' or 'outbound_lm')
      * @returns {Promise<string>} - Complete AI response content
      */
-    async sendMessageToAI(message, phoneNumber, conversationStatus = 'AI') {
+    async sendMessageToAI(message, phoneNumber, conversationStatus = 'AI', direction = 'inbound') {
         try {
             console.log('🤖 Sending message to AI API...');
             console.log('📊 Conversation Status:', conversationStatus);
+            console.log('📍 Direction:', direction);
             // console.log(`📞 Phone: ${phoneNumber}`);
             // console.log(`💬 Message: ${message}`);
             
@@ -31,7 +33,8 @@ class AIService {
                 message: message,
                 phoneNumber: phoneNumber,
                 isWhatsApp: true,
-                conversationStatus: conversationStatus  
+                conversationStatus: conversationStatus,
+                direction: direction
             };
             
             // console.log('📦 Request body:', JSON.stringify(requestBody, null, 2));

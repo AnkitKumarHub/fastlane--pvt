@@ -107,7 +107,7 @@ class Validator {
    */
   validateConversationStatus(status) {
     if (!status) {
-      return true; // Status is optional, will default to AI_ONLY
+      return true; // Status is optional, will default to AI
     }
 
     const validStatuses = Object.values(constants.CONVERSATION_STATUS);
@@ -285,7 +285,7 @@ class Validator {
       whatsappId: this.sanitizeString(userData.whatsappId),
       displayName: this.sanitizeString(userData.displayName, 100),
       phoneNumber: this.sanitizeString(userData.phoneNumber),
-      conversationStatus: userData.conversationStatus || constants.CONVERSATION_STATUS.AI_ONLY,
+      conversationStatus: userData.conversationStatus || constants.CONVERSATION_STATUS.AI,
       isActive: userData.isActive !== undefined ? Boolean(userData.isActive) : true
     };
   }

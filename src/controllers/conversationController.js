@@ -37,12 +37,12 @@ class ConversationController {
         });
       }
 
-      // if (!lmName) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     error: 'LM Name is required'
-      //   });
-      // }
+      if (!lmName) {
+        return res.status(400).json({
+          success: false,
+          error: 'LM Name is required'
+        });
+      }
 
       // logger.api('POST', '/api/conversation/takeover', { phoneNumber, lmId });
 
@@ -97,12 +97,12 @@ class ConversationController {
         });
       }
 
-      // if (!lmName) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     error: 'LM Name is required'
-      //   });
-      // }
+      if (!lmName) {
+        return res.status(400).json({
+          success: false,
+          error: 'LM Name is required'
+        });
+      }
 
       logger.api('POST', '/api/conversation/release', { phoneNumber, lmId });
 
@@ -193,11 +193,11 @@ class ConversationController {
     try {
       const { phoneNumber, lmId, message, clientMessageId } = req.body;
 
-      // logger.api('POST', '/api/conversation/lm/send', { 
-      //   phoneNumber, 
-      //   lmId, 
-      //   clientMessageId 
-      // });
+      logger.api('POST', '/api/conversation/lm/send', { 
+        phoneNumber, 
+        lmId, 
+        clientMessageId 
+      });
 
       // Step 1: Validate request body
       let validatedData;
@@ -270,7 +270,8 @@ class ConversationController {
       aiService.sendMessageToAI(
         validatedData.message,
         validatedData.phoneNumber,
-        constants.CONVERSATION_STATUS.HUMAN
+        constants.CONVERSATION_STATUS.HUMAN,
+        constants.MESSAGE_DIRECTION.OUTBOUND_LM  // LM message direction
       ).catch(aiError => {
         logger.warn('ConversationController', 'Async AI context update failed (non-critical)', {
           phoneNumber: validatedData.phoneNumber,

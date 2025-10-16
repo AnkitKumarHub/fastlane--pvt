@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const dotenv = require('dotenv');
 
 // Load environment variables
@@ -8,13 +9,22 @@ dotenv.config();
 // Import services and middleware
 const { databaseService } = require('./src/services');
 const ErrorHandler = require('./src/middleware/errorHandler');
+const CorsConfig = require('./src/config/corsConfig');
 const logger = require('./src/utils/logger');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.WHATSAPP_API_PORT || 8080;
 
 // Setup global error handlers
 ErrorHandler.setupGlobalHandlers();
+
+// CORS Configuration
+const corsOptions = CorsConfig.getCorsOptions();
+app.use(cors(corsOptions));
+
+// Validate and log CORS configuration
+CorsConfig.validateConfiguration();
+CorsConfig.logConfiguration();
 
 // Middleware
 app.use(bodyParser.json({ limit: '10mb' }));

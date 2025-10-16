@@ -177,126 +177,126 @@ class FirestoreUserService {
   /**
    * Sync user deactivation to Firestore
    */
-  // async syncUserDeactivation(mongoUser) {
-  //   try {
-  //     if (!firestoreService.isReady()) {
-  //       logger.debug('FirestoreUserService', 'Service not ready, skipping deactivation sync');
-  //       return null;
-  //     }
+  async syncUserDeactivation(mongoUser) {
+    try {
+      if (!firestoreService.isReady()) {
+        logger.debug('FirestoreUserService', 'Service not ready, skipping deactivation sync');
+        return null;
+      }
 
-  //     logger.info('FirestoreUserService', 'Syncing user deactivation to Firestore', { 
-  //       whatsappId: mongoUser.whatsappId 
-  //     });
+      logger.info('FirestoreUserService', 'Syncing user deactivation to Firestore', { 
+        whatsappId: mongoUser.whatsappId 
+      });
 
-  //     // Update user status to inactive
-  //     const result = await firestoreService.saveUser(
-  //       mongoUser.whatsappId,
-  //       {
-  //         isActive: false,
-  //         updatedAt: MongoToFirestoreTransformer.timestamp()
-  //       }
-  //     );
+      // Update user status to inactive
+      const result = await firestoreService.saveUser(
+        mongoUser.whatsappId,
+        {
+          isActive: false,
+          updatedAt: MongoToFirestoreTransformer.timestamp()
+        }
+      );
 
-  //     logger.success('FirestoreUserService', 'User deactivation synced successfully', { 
-  //       whatsappId: mongoUser.whatsappId
-  //     });
+      logger.success('FirestoreUserService', 'User deactivation synced successfully', { 
+        whatsappId: mongoUser.whatsappId
+      });
 
-  //     return result;
+      return result;
 
-  //   } catch (error) {
-  //     logger.warn('FirestoreUserService', `Failed to sync user deactivation: ${error.message}`, error);
-  //     // Don't throw - Firestore sync failures should not block MongoDB operations
-  //     return null;
-  //   }
-  // }
+    } catch (error) {
+      logger.warn('FirestoreUserService', `Failed to sync user deactivation: ${error.message}`, error);
+      // Don't throw - Firestore sync failures should not block MongoDB operations
+      return null;
+    }
+  }
 
   /**
    * Sync user reactivation to Firestore
    */
-  // async syncUserReactivation(mongoUser) {
-  //   try {
-  //     if (!firestoreService.isReady()) {
-  //       logger.debug('FirestoreUserService', 'Service not ready, skipping reactivation sync');
-  //       return null;
-  //     }
+  async syncUserReactivation(mongoUser) {
+    try {
+      if (!firestoreService.isReady()) {
+        logger.debug('FirestoreUserService', 'Service not ready, skipping reactivation sync');
+        return null;
+      }
 
-  //     logger.info('FirestoreUserService', 'Syncing user reactivation to Firestore', { 
-  //       whatsappId: mongoUser.whatsappId 
-  //     });
+      logger.info('FirestoreUserService', 'Syncing user reactivation to Firestore', { 
+        whatsappId: mongoUser.whatsappId 
+      });
 
-  //     // Update user status to active
-  //     const result = await firestoreService.saveUser(
-  //       mongoUser.whatsappId,
-  //       {
-  //         isActive: true,
-  //         updatedAt: MongoToFirestoreTransformer.timestamp()
-  //       }
-  //     );
+      // Update user status to active
+      const result = await firestoreService.saveUser(
+        mongoUser.whatsappId,
+        {
+          isActive: true,
+          updatedAt: MongoToFirestoreTransformer.timestamp()
+        }
+      );
 
-  //     logger.success('FirestoreUserService', 'User reactivation synced successfully', { 
-  //       whatsappId: mongoUser.whatsappId
-  //     });
+      logger.success('FirestoreUserService', 'User reactivation synced successfully', { 
+        whatsappId: mongoUser.whatsappId
+      });
 
-  //     return result;
+      return result;
 
-  //   } catch (error) {
-  //     logger.warn('FirestoreUserService', `Failed to sync user reactivation: ${error.message}`, error);
-  //     // Don't throw - Firestore sync failures should not block MongoDB operations
-  //     return null;
-  //   }
-  // }
+    } catch (error) {
+      logger.warn('FirestoreUserService', `Failed to sync user reactivation: ${error.message}`, error);
+      // Don't throw - Firestore sync failures should not block MongoDB operations
+      return null;
+    }
+  }
 
   /**
    * Get user from Firestore for comparison/debugging
    */
-  // async getFirestoreUser(whatsappId) {
-  //   try {
-  //     if (!firestoreService.isReady()) {
-  //       logger.debug('FirestoreUserService', 'Service not ready, cannot get Firestore user');
-  //       return null;
-  //     }
+  async getFirestoreUser(whatsappId) {
+    try {
+      if (!firestoreService.isReady()) {
+        logger.debug('FirestoreUserService', 'Service not ready, cannot get Firestore user');
+        return null;
+      }
 
-  //     const user = await firestoreService.getUser(whatsappId);
-  //     return user ? MongoToFirestoreTransformer.firestoreDocToObject({ 
-  //       exists: true, 
-  //       id: whatsappId, 
-  //       data: () => user 
-  //     }) : null;
+      const user = await firestoreService.getUser(whatsappId);
+      return user ? MongoToFirestoreTransformer.firestoreDocToObject({ 
+        exists: true, 
+        id: whatsappId, 
+        data: () => user 
+      }) : null;
 
-  //   } catch (error) {
-  //     logger.warn('FirestoreUserService', `Failed to get Firestore user: ${error.message}`, error);
-  //     return null;
-  //   }
-  // }
+    } catch (error) {
+      logger.warn('FirestoreUserService', `Failed to get Firestore user: ${error.message}`, error);
+      return null;
+    }
+  }
 
   /**
    * Delete user from Firestore (if needed for cleanup)
    */
-  // async deleteFirestoreUser(whatsappId) {
-  //   try {
-  //     if (!firestoreService.isReady()) {
-  //       logger.debug('FirestoreUserService', 'Service not ready, cannot delete Firestore user');
-  //       return null;
-  //     }
+  async deleteFirestoreUser(whatsappId) {
+    try {
+      if (!firestoreService.isReady()) {
+        logger.debug('FirestoreUserService', 'Service not ready, cannot delete Firestore user');
+        return null;
+      }
 
-  //     logger.info('FirestoreUserService', 'Deleting user from Firestore', { 
-  //       whatsappId
-  //     });
+      logger.info('FirestoreUserService', 'Deleting user from Firestore', { 
+        whatsappId
+      });
 
-  //     const result = await firestoreService.deleteUser(whatsappId);
+      const result = await firestoreService.deleteUser(whatsappId);
 
-  //     logger.success('FirestoreUserService', 'User deleted from Firestore', { 
-  //       whatsappId,
-  //       deletedMessages: result?.deletedMessages || 0
-  //     });
+      logger.success('FirestoreUserService', 'User deleted from Firestore', { 
+        whatsappId,
+        deletedMessages: result?.deletedMessages || 0
+      });
 
-  //     return result;
+      return result;
 
-  //   } catch (error) {
-  //     logger.warn('FirestoreUserService', `Failed to delete Firestore user: ${error.message}`, error);
-  //     return null;
-  //   }
-  // }
+    } catch (error) {
+      logger.warn('FirestoreUserService', `Failed to delete Firestore user: ${error.message}`, error);
+      return null;
+    }
+  }
 }
 
 // Create singleton instance

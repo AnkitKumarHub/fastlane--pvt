@@ -23,9 +23,9 @@ class ConversationControlService {
         throw new Error('LM ID is required');
       }
       
-      // if (!lmName || !lmName.trim()) {
-      //   throw new Error('LM Name is required');
-      // }
+      if (!lmName || !lmName.trim()) {
+        throw new Error('LM Name is required');
+      }
 
       logger.info('ConversationControl', 'Taking over conversation', {
         phoneNumber,

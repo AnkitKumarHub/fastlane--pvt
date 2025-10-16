@@ -311,11 +311,12 @@ class MessageProcessor {
             // Format phone number and get AI response
             const formattedPhone = this.aiService.formatPhoneNumber(whatsappId);
             
-            // ✅ Pass conversationStatus as 4th parameter
+            // ✅ Pass conversationStatus and direction as parameters
             const aiResponse = await this.aiService.sendMessageToAI(
                 messageObj.content.text,
                 formattedPhone,
-                conversationStatus  
+                conversationStatus,
+                constants.MESSAGE_DIRECTION.INBOUND  // User message direction
             );
             
             console.log('✅ AI service returned response');
