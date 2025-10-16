@@ -203,7 +203,7 @@ class AIService {
                         resolve(contentChunks);
                     } else {
                         console.warn('⚠️ No usable content found, using fallback');
-                        resolve("I received your message but couldn't generate a proper response. Please try again.");
+                        resolve("I want to give you the best answer — Could you share a bit more detail?");
                     }
                 }
             });
