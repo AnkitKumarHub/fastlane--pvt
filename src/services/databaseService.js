@@ -99,8 +99,12 @@ class DatabaseService {
           type: messageData.mediaType || 'Unknown Type', // Default to 'Unknown Type' if type not specified
           mimeType: messageData.mimeType,
           fileName: messageData.fileName || 'unknown',
-          fileSize: messageData.fileSize || 0
+          fileSize: messageData.fileSize || 0,
+          storagePath: messageData.storagePath || null, // NEW: Include storagePath
+          metadata: messageData.mediaMetadata || null   // NEW: Include metadata
         };
+        
+        console.log('🔍 DEBUG: mediaData created in databaseService:', JSON.stringify(mediaData, null, 2));
       }
 
       // 3. Prepare message data for storage

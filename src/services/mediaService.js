@@ -1,12 +1,14 @@
 /**
  * Media Service
  * Handles Firebase Storage operations for WhatsApp media files
+ * Enhanced with structured storage paths and new media processing
  */
 
 const firebaseConfig = require('../utils/firebaseConfig');
 const logger = require('../utils/logger');
 const validator = require('../utils/validators');
 const constants = require('../utils/constants');
+const MediaProcessor = require('./mediaProcessor');
 const path = require('path');
 
 class MediaService {
@@ -35,9 +37,16 @@ class MediaService {
   }
 
   /**
-   * Upload media file to Firebase Storage
+   * Enhanced upload media file using new MediaProcessor and structured paths
+   * @param {Buffer} fileBuffer - File buffer
+   * @param {string} whatsappId - WhatsApp ID
+   * @param {string} messageId - Message ID
+   * @param {string} originalFileName - Original filename
+   * @param {string} mimeType - MIME type
+   * @param {string} direction - Message direction (inbound, outbound_ai, outbound_lm)
+   * @returns {Object} - Upload result with storagePath
    */
-  async uploadMediaFile(fileBuffer, whatsappId, messageId, originalFileName, mimeType) {
+  async uploadMediaFile(fileBuffer, whatsappId, messageId, originalFileName, mimeType, direction = 'inbound') {
     try {
       if (!this.bucket) {
         this.initialize();
@@ -59,35 +68,85 @@ class MediaService {
         throw new Error('MIME type is required');
       }
 
-      // Validate file size
-      if (fileBuffer.length > constants.FIREBASE.MAX_FILE_SIZE) {
-        throw new Error(`File size exceeds maximum allowed size of ${constants.FIREBASE.MAX_FILE_SIZE} bytes`);
-      }
+      // Prepare media info for new processor
+      const mediaInfo = {
+        buffer: fileBuffer,
+        mimeType: mimeType,
+        filename: originalFileName,
+        fileSize: fileBuffer.length
+      };
 
-      // Validate MIME type
-      if (!constants.FIREBASE.ALLOWED_MIME_TYPES.includes(mimeType)) {
-        throw new Error(`MIME type ${mimeType} is not allowed`);
-      }
-
-      // Get file extension
-      const fileExtension = path.extname(originalFileName).slice(1).toLowerCase();
-      if (!fileExtension) {
-        throw new Error('File must have a valid extension');
-      }
-
-      // Determine media type from MIME type
-      const mediaType = this.getMediaTypeFromMimeType(mimeType);
-      validator.validateFileExtension(fileExtension, mediaType);
-      validator.validateFileSize(fileBuffer.length, mediaType);
-
-      // Generate storage path
-      const storagePath = firebaseConfig.generateMediaPath(whatsappId, messageId, fileExtension);
+      // Prepare message data
+      const messageData = {
+        from: direction === 'inbound' ? whatsappId : null,
+        to: direction !== 'inbound' ? whatsappId : null,
+        messageId: messageId
+      };
 
       logger.media('UPLOAD_START', originalFileName, fileBuffer.length, {
         whatsappId,
         messageId,
+        mimeType,
+        direction
+      });
+
+      // Use new MediaProcessor for enhanced processing
+      const result = await MediaProcessor.processMedia(messageData, mediaInfo, direction);
+
+      logger.media('UPLOAD_SUCCESS', originalFileName, fileBuffer.length, {
+        whatsappId,
+        messageId,
+        storagePath: result.storagePath,
+        publicUrl: result.url
+      });
+
+      return {
+        url: result.url,
+        storagePath: result.storagePath,  // NEW: Include storage path
+        type: result.type,
+        mimeType: result.mimeType,
+        fileName: result.fileName,
+        fileSize: result.fileSize,
+        metadata: result.metadata,
+        warnings: result.warnings,
+        uploadedAt: new Date()
+      };
+
+    } catch (error) {
+      logger.error('MediaService', `Failed to upload media file: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * NEW: Upload with custom storage path (used by MediaProcessor)
+   * @param {Buffer} fileBuffer - File buffer
+   * @param {string} storagePath - Custom storage path
+   * @param {Object} mediaInfo - Media information
+   * @returns {Object} - Upload result
+   */
+  async uploadWithPath(fileBuffer, storagePath, mediaInfo) {
+    try {
+      if (!this.bucket) {
+        this.initialize();
+      }
+
+      if (!fileBuffer || !Buffer.isBuffer(fileBuffer)) {
+        throw new Error('File buffer is required and must be a valid Buffer');
+      }
+
+      if (!storagePath || typeof storagePath !== 'string') {
+        throw new Error('Storage path is required');
+      }
+
+      if (!mediaInfo || !mediaInfo.mimeType) {
+        throw new Error('Media info with MIME type is required');
+      }
+
+      logger.debug('MediaService', 'Uploading with custom path', {
         storagePath,
-        mimeType
+        fileSize: fileBuffer.length,
+        mimeType: mediaInfo.mimeType
       });
 
       // Upload file to Firebase Storage
@@ -95,15 +154,15 @@ class MediaService {
       
       const uploadOptions = {
         metadata: {
-          contentType: mimeType,
+          contentType: mediaInfo.mimeType,
           metadata: {
-            whatsappId,
-            messageId,
-            originalFileName,
-            uploadedAt: new Date().toISOString()
+            originalFileName: mediaInfo.filename || 'unknown',
+            uploadedAt: new Date().toISOString(),
+            fileSize: fileBuffer.length.toString(),
+            processedBy: 'MediaProcessor'
           }
         },
-        public: true, // Make file publicly readable
+        public: true,
         validation: 'crc32c'
       };
 
@@ -113,25 +172,20 @@ class MediaService {
       // Generate public URL
       const publicUrl = `https://storage.googleapis.com/${this.bucket.name}/${storagePath}`;
 
-      logger.media('UPLOAD_SUCCESS', originalFileName, fileBuffer.length, {
-        whatsappId,
-        messageId,
+      logger.success('MediaService', 'File uploaded with custom path', {
+        storagePath,
         publicUrl,
-        storagePath
+        fileSize: fileBuffer.length
       });
 
       return {
         url: publicUrl,
         storagePath,
-        type: mediaType,
-        mimeType,
-        fileName: originalFileName,
-        fileSize: fileBuffer.length,
-        uploadedAt: new Date()
+        success: true
       };
 
     } catch (error) {
-      logger.error('MediaService', `Failed to upload media file: ${error.message}`, error);
+      logger.error('MediaService', `Failed to upload with custom path: ${error.message}`, error);
       throw error;
     }
   }

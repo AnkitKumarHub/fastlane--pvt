@@ -97,8 +97,12 @@ class MongoToFirestoreTransformer {
           url: mongoMessage.mediaData.url,
           mimeType: mongoMessage.mediaData.mimeType || null,
           fileName: mongoMessage.mediaData.fileName || null,
-          fileSize: mongoMessage.mediaData.fileSize || 0
+          fileSize: mongoMessage.mediaData.fileSize || 0,
+          storagePath: mongoMessage.mediaData.storagePath || null, // NEW: Include storagePath
+          metadata: mongoMessage.mediaData.metadata || null        // NEW: Include metadata
         };
+        
+        console.log('🔍 DEBUG: mediaData transformed for Firestore:', JSON.stringify(firestoreMessage.mediaData, null, 2));
       }
 
       // Add aiAudit if present (only for AI messages)

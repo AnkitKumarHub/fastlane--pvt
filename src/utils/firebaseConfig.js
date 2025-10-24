@@ -119,8 +119,9 @@ class FirebaseConfig {
   }
 
   /**
-   * Generate file path for WhatsApp media
+   * Generate file path for WhatsApp media (Legacy format - for backward compatibility)
    * Format: /{MEDIA_PATH_PREFIX}/{whatsappId}/{messageId}.{extension}
+   * @deprecated Use PathGenerator.generateMediaPath for new structured paths
    */
   generateMediaPath(whatsappId, messageId, fileExtension) {
     if (!whatsappId || !messageId || !fileExtension) {

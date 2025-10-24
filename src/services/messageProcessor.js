@@ -1,6 +1,7 @@
 const whatsappService = require('./whatsappService');
 const databaseService = require('./databaseService');
-const mediaService = require('./mediaService');
+const MediaProcessor = require('./mediaProcessor');
+const LocationService = require('./locationService');
 const aiService = require('./aiService');
 const constants = require('../utils/constants');
 
@@ -72,21 +73,32 @@ class MessageProcessor {
                             mimeType: message.image?.mime_type,
                             caption: message.image?.caption || ''
                         };
-                        // console.log('🖼️ Image message content:', messageObj.content);
+                        console.log('🖼️ Image message content:', messageObj.content);
                         
-                        // Process image media
+                        // Process image media with new MediaProcessor
                         try {
-                            // console.log('📥 Processing image media...');
+                            console.log('📥 Processing image media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.image.id);
-                            mediaData = await mediaService.uploadMediaFile(
-                                downloadedMedia.buffer,
-                                messageObj.from,
-                                messageObj.messageId,
-                                downloadedMedia.filename,
-                                downloadedMedia.mimeType
+                            
+                            // Use new MediaProcessor
+                            mediaData = await MediaProcessor.processMedia(
+                                messageObj,
+                                downloadedMedia,
+                                'inbound'
                             );
-                            messageObj.content.mediaUrl = mediaData.url;
-                            // console.log('✅ Image media processed successfully:', mediaData.url);
+                            
+                            // Store media info in message object
+                            messageObj.media = {
+                                type: mediaData.type,
+                                url: mediaData.url,
+                                storagePath: mediaData.storagePath,  // NEW: Include storage path
+                                mimeType: mediaData.mimeType,
+                                fileName: mediaData.fileName,
+                                fileSize: mediaData.fileSize,
+                                metadata: mediaData.metadata
+                            };
+                            
+                            console.log('✅ Image media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Image media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -98,21 +110,32 @@ class MessageProcessor {
                             mediaId: message.audio?.id,
                             mimeType: message.audio?.mime_type
                         };
-                        // console.log('🔊 Audio message content:', messageObj.content);
+                        console.log('🔊 Audio message content:', messageObj.content);
                         
-                        // Process audio media
+                        // Process audio media with new MediaProcessor
                         try {
-                            // console.log('📥 Processing audio media...');
+                            console.log('📥 Processing audio media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.audio.id);
-                            mediaData = await mediaService.uploadMediaFile(
-                                downloadedMedia.buffer,
-                                messageObj.from,
-                                messageObj.messageId,
-                                downloadedMedia.filename,
-                                downloadedMedia.mimeType
+                            
+                            // Use new MediaProcessor
+                            mediaData = await MediaProcessor.processMedia(
+                                messageObj,
+                                downloadedMedia,
+                                'inbound'
                             );
-                            messageObj.content.mediaUrl = mediaData.url;
-                            // console.log('✅ Audio media processed successfully:', mediaData.url);
+                            
+                            // Store media info in message object
+                            messageObj.media = {
+                                type: mediaData.type,
+                                url: mediaData.url,
+                                storagePath: mediaData.storagePath,  // NEW: Include storage path
+                                mimeType: mediaData.mimeType,
+                                fileName: mediaData.fileName,
+                                fileSize: mediaData.fileSize,
+                                metadata: mediaData.metadata
+                            };
+                            
+                            console.log('✅ Audio media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Audio media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -125,25 +148,230 @@ class MessageProcessor {
                             mimeType: message.document?.mime_type,
                             filename: message.document?.filename
                         };
-                        // console.log('📄 Document message content:', messageObj.content);
+                        console.log('📄 Document message content:', messageObj.content);
                         
-                        // Process document media
+                        // Process document media with new MediaProcessor
                         try {
-                            // console.log('📥 Processing document media...');
+                            console.log('📥 Processing document media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.document.id);
+                            
                             // Use original filename if available
-                            const filename = message.document.filename || downloadedMedia.filename;
-                            mediaData = await mediaService.uploadMediaFile(
-                                downloadedMedia.buffer,
-                                messageObj.from,
-                                messageObj.messageId,
-                                filename,
-                                downloadedMedia.mimeType
+                            if (message.document.filename) {
+                                downloadedMedia.filename = message.document.filename;
+                            }
+                            
+                            // Use new MediaProcessor
+                            mediaData = await MediaProcessor.processMedia(
+                                messageObj,
+                                downloadedMedia,
+                                'inbound'
                             );
-                            messageObj.content.mediaUrl = mediaData.url;
-                            // console.log('✅ Document media processed successfully:', mediaData.url);
+                            
+                            // Store media info in message object
+                            messageObj.media = {
+                                type: mediaData.type,
+                                url: mediaData.url,
+                                storagePath: mediaData.storagePath,  // NEW: Include storage path
+                                mimeType: mediaData.mimeType,
+                                fileName: mediaData.fileName,
+                                fileSize: mediaData.fileSize,
+                                metadata: mediaData.metadata
+                            };
+                            
+                            console.log('✅ Document media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Document media processing failed:', error.message);
+                            mediaProcessingError = error.message;
+                        }
+                        break;
+                        
+                    case 'video':
+                        messageObj.content = {
+                            mediaId: message.video?.id,
+                            mimeType: message.video?.mime_type,
+                            caption: message.video?.caption || ''
+                        };
+                        console.log('🎥 Video message content:', messageObj.content);
+                        
+                        // Process video media with new MediaProcessor
+                        try {
+                            console.log('📥 Processing video media...');
+                            const downloadedMedia = await whatsappService.downloadMedia(message.video.id);
+                            
+                            // Use new MediaProcessor
+                            mediaData = await MediaProcessor.processMedia(
+                                messageObj,
+                                downloadedMedia,
+                                'inbound'
+                            );
+                            
+                            // Store media info in message object
+                            messageObj.media = {
+                                type: mediaData.type,
+                                url: mediaData.url,
+                                storagePath: mediaData.storagePath,  // NEW: Include storage path
+                                mimeType: mediaData.mimeType,
+                                fileName: mediaData.fileName,
+                                fileSize: mediaData.fileSize,
+                                metadata: mediaData.metadata
+                            };
+                            
+                            console.log('✅ Video media processed successfully:', mediaData.url);
+                        } catch (error) {
+                            console.error('❌ Video media processing failed:', error.message);
+                            mediaProcessingError = error.message;
+                        }
+                        break;
+                        
+                    case 'voice':
+                        messageObj.content = {
+                            mediaId: message.voice?.id,
+                            mimeType: message.voice?.mime_type
+                        };
+                        console.log('🎤 Voice message content:', messageObj.content);
+                        
+                        // Process voice media with new MediaProcessor
+                        try {
+                            console.log('📥 Processing voice media...');
+                            const downloadedMedia = await whatsappService.downloadMedia(message.voice.id);
+                            
+                            // Use new MediaProcessor
+                            mediaData = await MediaProcessor.processMedia(
+                                messageObj,
+                                downloadedMedia,
+                                'inbound'
+                            );
+                            
+                            // Store media info in message object
+                            messageObj.media = {
+                                type: mediaData.type,
+                                url: mediaData.url,
+                                storagePath: mediaData.storagePath,  // NEW: Include storage path
+                                mimeType: mediaData.mimeType,
+                                fileName: mediaData.fileName,
+                                fileSize: mediaData.fileSize,
+                                metadata: mediaData.metadata
+                            };
+                            
+                            console.log('✅ Voice media processed successfully:', mediaData.url);
+                        } catch (error) {
+                            console.error('❌ Voice media processing failed:', error.message);
+                            mediaProcessingError = error.message;
+                        }
+                        break;
+                        
+                    case 'sticker':
+                        messageObj.content = {
+                            mediaId: message.sticker?.id,
+                            mimeType: message.sticker?.mime_type
+                        };
+                        console.log('😄 Sticker message content:', messageObj.content);
+                        
+                        // Process sticker media with new MediaProcessor
+                        try {
+                            console.log('📥 Processing sticker media...');
+                            const downloadedMedia = await whatsappService.downloadMedia(message.sticker.id);
+                            
+                            // Use new MediaProcessor
+                            mediaData = await MediaProcessor.processMedia(
+                                messageObj,
+                                downloadedMedia,
+                                'inbound'
+                            );
+                            
+                            // Store media info in message object
+                            messageObj.media = {
+                                type: mediaData.type,
+                                url: mediaData.url,
+                                storagePath: mediaData.storagePath,  // NEW: Include storage path
+                                mimeType: mediaData.mimeType,
+                                fileName: mediaData.fileName,
+                                fileSize: mediaData.fileSize,
+                                metadata: mediaData.metadata
+                            };
+                            
+                            console.log('✅ Sticker media processed successfully:', mediaData.url);
+                        } catch (error) {
+                            console.error('❌ Sticker media processing failed:', error.message);
+                            mediaProcessingError = error.message;
+                        }
+                        break;
+                        
+                    case 'location':
+                        messageObj.content = {
+                            latitude: message.location?.latitude,
+                            longitude: message.location?.longitude,
+                            name: message.location?.name,
+                            address: message.location?.address
+                        };
+                        console.log('📍 Location message content:', messageObj.content);
+                        
+                        // Process location data with LocationService (bypass media validation)
+                        try {
+                            console.log('📥 Processing location data...');
+                            
+                            // Use LocationService for location processing (no media validation)
+                            mediaData = await LocationService.processLocation(
+                                messageObj,
+                                messageObj.content,
+                                'inbound'
+                            );
+                            
+                            // Store location info in message object with proper file information
+                            messageObj.media = {
+                                type: mediaData.type,
+                                url: mediaData.thumbnailUrl || null,
+                                storagePath: mediaData.thumbnailPath || null,
+                                mimeType: mediaData.mimeType || null,
+                                fileName: mediaData.fileName || null,
+                                fileSize: mediaData.fileSize || 0,
+                                metadata: mediaData.metadata
+                            };
+                            
+                            console.log('✅ Location data processed successfully');
+                        } catch (error) {
+                            console.error('❌ Location processing failed:', error.message);
+                            mediaProcessingError = error.message;
+                        }
+                        break;
+                        
+                    case 'contacts':
+                        messageObj.content = {
+                            contacts: message.contacts
+                        };
+                        console.log('👥 Contact message content:', messageObj.content);
+                        
+                        // Process contact data with new MediaProcessor
+                        try {
+                            console.log('📥 Processing contact data...');
+                            
+                            // Process each contact
+                            const contactsData = [];
+                            for (const contact of message.contacts) {
+                                const contactResult = await MediaProcessor.processMedia(
+                                    messageObj,
+                                    contact,
+                                    'inbound'
+                                );
+                                contactsData.push(contactResult);
+                            }
+                            
+                            // Store contacts info in message object
+                            messageObj.media = {
+                                type: constants.MEDIA_TYPES.CONTACT,
+                                url: null, // Contacts don't have URL
+                                storagePath: null, // Contacts don't need storage
+                                mimeType: 'text/vcard',
+                                fileName: null,
+                                fileSize: 0,
+                                metadata: {
+                                    contacts: contactsData.map(c => c.metadata)
+                                }
+                            };
+                            
+                            console.log('✅ Contact data processed successfully');
+                        } catch (error) {
+                            console.error('❌ Contact processing failed:', error.message);
                             mediaProcessingError = error.message;
                         }
                         break;
@@ -180,11 +408,48 @@ class MessageProcessor {
                                 textContent = '[AUDIO] Voice message';
                             }
                             break;
+                        case 'video':
+                            if (mediaProcessingError) {
+                                textContent = `[VIDEO] ${messageObj.content?.caption || 'Video'} - Processing failed: ${mediaProcessingError}`;
+                            } else {
+                                textContent = `[VIDEO] ${messageObj.content?.caption || 'Video'}`;
+                            }
+                            break;
+                        case 'voice':
+                            if (mediaProcessingError) {
+                                textContent = '[VOICE] Voice note - Processing failed: ' + mediaProcessingError;
+                            } else {
+                                textContent = '[VOICE] Voice note';
+                            }
+                            break;
                         case 'document':
                             if (mediaProcessingError) {
                                 textContent = `[DOCUMENT] ${messageObj.content?.filename || 'File'} - Processing failed: ${mediaProcessingError}`;
                             } else {
                                 textContent = `[DOCUMENT] ${messageObj.content?.filename || 'File'}`;
+                            }
+                            break;
+                        case 'sticker':
+                            if (mediaProcessingError) {
+                                textContent = '[STICKER] Sticker - Processing failed: ' + mediaProcessingError;
+                            } else {
+                                textContent = '[STICKER] Sticker';
+                            }
+                            break;
+                        case 'location':
+                            if (mediaProcessingError) {
+                                textContent = '[LOCATION] Location - Processing failed: ' + mediaProcessingError;
+                            } else {
+                                const locationName = messageObj.content?.name || 'Location';
+                                textContent = `[LOCATION] ${locationName}`;
+                            }
+                            break;
+                        case 'contacts':
+                            if (mediaProcessingError) {
+                                textContent = '[CONTACT] Contact - Processing failed: ' + mediaProcessingError;
+                            } else {
+                                const contactCount = messageObj.content?.contacts?.length || 1;
+                                textContent = `[CONTACT] ${contactCount} contact${contactCount > 1 ? 's' : ''}`;
                             }
                             break;
                         default:
@@ -199,18 +464,36 @@ class MessageProcessor {
                         phoneNumber: messageObj.from // Use whatsappId as phone number
                     };
                     
-                    // Add media information if processing was successful
-                    if (mediaData && mediaData.url) {
-                        messageData.mediaUrl = mediaData.url;
-                        messageData.mediaType = mediaData.type;
-                        messageData.mimeType = mediaData.mimeType;
-                        messageData.fileName = mediaData.fileName;
-                        messageData.fileSize = mediaData.fileSize;
-                        // console.log('📎 Media information added to database:', {
-                        //     url: mediaData.url,
-                        //     type: mediaData.type,
-                        //     mimeType: mediaData.mimeType
-                        // });
+                    // Add enhanced media information if processing was successful
+                    if (messageObj.media) {
+                        messageData.mediaUrl = messageObj.media.url;
+                        messageData.mediaType = messageObj.media.type;
+                        messageData.mimeType = messageObj.media.mimeType;
+                        messageData.fileName = messageObj.media.fileName;
+                        messageData.fileSize = messageObj.media.fileSize;
+                        
+                        // NEW: Add storage path to Firestore
+                        if (messageObj.media.storagePath) {
+                            messageData.storagePath = messageObj.media.storagePath;
+                            console.log('🔍 DEBUG: storagePath added to messageData:', messageData.storagePath);
+                        } else {
+                            console.log('⚠️ DEBUG: messageObj.media.storagePath is missing or null');
+                        }
+                        
+                        // Add metadata if available
+                        if (messageObj.media.metadata) {
+                            messageData.mediaMetadata = messageObj.media.metadata;
+                        }
+                        
+                        console.log('📎 Enhanced media information added to database:', {
+                            url: messageObj.media.url,
+                            type: messageObj.media.type,
+                            storagePath: messageObj.media.storagePath,
+                            mimeType: messageObj.media.mimeType,
+                            messageDataStoragePath: messageData.storagePath // NEW: Debug log
+                        });
+                        
+                        console.log('🔍 DEBUG: Full messageData being sent to database:', JSON.stringify(messageData, null, 2));
                     }
                     
                     const result = await databaseService.processIncomingMessage(whatsappId, messageData);
@@ -231,9 +514,35 @@ class MessageProcessor {
                     await processor.processAIResponse(messageObj);
                     console.log('✅ AI processing completed');
                 } else if (messageObj.type !== 'text') {
-                    // console.log(`📎 Non-text message received (${messageObj.type}), sending acknowledgment...`);
+                    console.log(`📎 Non-text message received (${messageObj.type}), sending acknowledgment...`);
                     
-                    const acknowledgmentText = "I received your message! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                    let acknowledgmentText;
+                    switch (messageObj.type) {
+                        case 'image':
+                            acknowledgmentText = "I received your image! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            break;
+                        case 'video':
+                            acknowledgmentText = "I received your video! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            break;
+                        case 'audio':
+                        case 'voice':
+                            acknowledgmentText = "I received your audio message! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            break;
+                        case 'document':
+                            acknowledgmentText = "I received your document! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            break;
+                        case 'sticker':
+                            acknowledgmentText = "I received your sticker! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            break;
+                        case 'location':
+                            acknowledgmentText = "I received your location! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            break;
+                        case 'contacts':
+                            acknowledgmentText = "I received your contact! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            break;
+                        default:
+                            acknowledgmentText = "I received your message! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                    }
                     
                     const whatsappResponse = await whatsappService.sendMessage(messageObj.from, acknowledgmentText);
                     // console.log('✅ Acknowledgment sent for non-text message');

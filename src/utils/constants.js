@@ -24,15 +24,27 @@ module.exports = {
     AUDIO: 'audio',
     DOCUMENT: 'document',
     STICKER: 'sticker',
-    VOICE: 'voice'
+    VOICE: 'voice',
+    LOCATION: 'location',
+    CONTACT: 'contact'
   },
 
   // Supported File Extensions
   SUPPORTED_EXTENSIONS: {
     IMAGE: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    VIDEO: ['mp4', 'avi', 'mov', 'wmv', '3gp'],
-    AUDIO: ['mp3', 'wav', 'aac', 'ogg', 'm4a'],
-    DOCUMENT: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt']
+    VIDEO: ['mp4', '3gp'],                           // WhatsApp compatible only
+    AUDIO: ['mp3', 'wav', 'aac', 'opus', 'ogg', 'm4a'], // Extended voice support
+    DOCUMENT: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'],
+    STICKER: ['webp'],                               // WhatsApp stickers
+    VOICE: ['ogg', 'mp3', 'opus'],                  // WhatsApp + extended
+    LOCATION: ['png']                                // Location thumbnail images
+  },
+
+  // Sender Types
+  SENDER_TYPES: {
+    USER: 'user',     // Inbound messages  
+    AI: 'ai',         // AI responses
+    LM: 'lm'          // LM responses
   },
 
   // WhatsApp Limits
@@ -43,7 +55,8 @@ module.exports = {
       VIDEO: 16 * 1024 * 1024,       // 16MB
       AUDIO: 16 * 1024 * 1024,       // 16MB
       DOCUMENT: 100 * 1024 * 1024,   // 100MB
-      VOICE: 16 * 1024 * 1024        // 16MB
+      VOICE: 16 * 1024 * 1024,       // 16MB
+      LOCATION: 5 * 1024 * 1024      // 5MB (thumbnail images)
     }
   },
 
@@ -67,15 +80,26 @@ module.exports = {
 
   // Firebase Storage
   FIREBASE: {
-    MEDIA_PATH_PREFIX: 'bertWhatsappCollection',
+    MEDIA_PATH_PREFIX: 'lynnWhatsappChat',          // Updated path prefix
     PUBLIC_ACCESS: true,
     MAX_FILE_SIZE: 100 * 1024 * 1024, // 100MB
     ALLOWED_MIME_TYPES: [
+      // Images
       'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/avi', 'video/quicktime',
-      'audio/mpeg', 'audio/wav', 'audio/aac',
+      // Videos (WhatsApp compatible only)
+      'video/mp4', 'video/3gpp',
+      // Audio (extended support)
+      'audio/mpeg', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/opus', 'audio/mp4',
+      // Documents
       'application/pdf', 'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'text/plain',
+      // Stickers
+      'image/webp'
     ]
   },
 
