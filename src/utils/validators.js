@@ -286,7 +286,8 @@ class Validator {
       displayName: this.sanitizeString(userData.displayName, 100),
       phoneNumber: this.sanitizeString(userData.phoneNumber),
       conversationStatus: userData.conversationStatus || constants.CONVERSATION_STATUS.AI,
-      isActive: userData.isActive !== undefined ? Boolean(userData.isActive) : true
+      isActive: userData.isActive !== undefined ? Boolean(userData.isActive) : true,
+      assignedToLm: userData.assignedToLm !== undefined ? Boolean(userData.assignedToLm) : false
     };
   }
 
