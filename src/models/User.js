@@ -34,7 +34,11 @@ const userSchema = new mongoose.Schema({
     maxlength: constants.VALIDATION.WHATSAPP_ID.MAX_LENGTH,
     match: constants.VALIDATION.WHATSAPP_ID.PATTERN
   },
-  
+  assignedToLm:{
+    type: Boolean,
+    default: false
+  },
+
   displayName: {
     type: String,
     trim: true,
