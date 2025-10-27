@@ -40,7 +40,8 @@ class ConversationControlService {
         logger.info('ConversationControl', 'User not found, creating new user', { phoneNumber });
         user = await userService.findOrCreateUser({
           whatsappId: phoneNumber,
-          phoneNumber: phoneNumber
+          phoneNumber: phoneNumber,
+          assignedToLm: false // Default value for new users
         });
       }
 

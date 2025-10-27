@@ -79,7 +79,8 @@ class DatabaseService {
       const user = await this.userService.findOrCreateUser({
         whatsappId,
         displayName: messageData.senderName || null,
-        phoneNumber: messageData.phoneNumber || whatsappId // Use whatsappId as phone number if not provided
+        phoneNumber: messageData.phoneNumber || whatsappId, // Use whatsappId as phone number if not provided
+        assignedToLm: false // Default value for new users
       });
 
       // 2. Handle media upload if present
