@@ -22,6 +22,7 @@ class MongoToFirestoreTransformer {
         phoneNumber: mongoUser.phoneNumber || null,
         conversationStatus: mongoUser.conversationStatus || 'AI',
         assignedLmId: mongoUser.assignedLmId || null,
+        assignedToLm: mongoUser.assignedToLm !== undefined ? mongoUser.assignedToLm : false,
         lastTakeover: mongoUser.lastTakeover ? {
           timestamp: mongoUser.lastTakeover.timestamp ? 
             admin.firestore.Timestamp.fromDate(mongoUser.lastTakeover.timestamp) : null,
