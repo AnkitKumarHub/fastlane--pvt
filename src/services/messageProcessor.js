@@ -519,29 +519,29 @@ class MessageProcessor {
                     let acknowledgmentText;
                     switch (messageObj.type) {
                         case 'image':
-                            acknowledgmentText = "I received your image! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                             break;
                         case 'video':
-                            acknowledgmentText = "I received your video! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                             break;
                         case 'audio':
                         case 'voice':
-                            acknowledgmentText = "I received your audio message! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                             break;
                         case 'document':
-                            acknowledgmentText = "I received your document! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                             break;
                         case 'sticker':
-                            acknowledgmentText = "I received your sticker! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                             break;
                         case 'location':
-                            acknowledgmentText = "I received your location! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                             break;
                         case 'contacts':
-                            acknowledgmentText = "I received your contact! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                             break;
                         default:
-                            acknowledgmentText = "I received your message! Currently, I can only respond to text messages. Please send your message as text and I'll be happy to help! 📝";
+                            acknowledgmentText = "Processing media shared by you";
                     }
                     
                     const whatsappResponse = await whatsappService.sendMessage(messageObj.from, acknowledgmentText);
