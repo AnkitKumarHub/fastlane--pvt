@@ -98,13 +98,20 @@ class UserService {
         logger.debug('UserService', `User exists, returning existing user`, { 
           whatsappId: userData.whatsappId 
         });
-        return existingUser;
+        return {
+          user: existingUser,
+          isNewlyCreated: false
+        };
       }
 
       logger.info('UserService', `User not found, creating new user`, { 
         whatsappId: userData.whatsappId 
       });
-      return await this.createUser(userData);
+      const newUser = await this.createUser(userData);
+      return {
+        user: newUser,
+        isNewlyCreated: true
+      };
 
     } catch (error) {
       logger.error('UserService', `Failed to find or create user: ${error.message}`, error);

@@ -14,7 +14,7 @@ class MessageProcessor {
     static async processIncomingMessage(messageData) {
         console.log('🚨 === MESSAGE PROCESSOR STARTED ===');
         // console.log('🔄 Processing incoming message...');
-        console.log('📦 Message data received:', JSON.stringify(messageData, null, 2));
+        // console.log('📦 Message data received:', JSON.stringify(messageData, null, 2));
         
         // Create instance for AI service access
         const processor = new MessageProcessor();
@@ -73,11 +73,11 @@ class MessageProcessor {
                             mimeType: message.image?.mime_type,
                             caption: message.image?.caption || ''
                         };
-                        console.log('🖼️ Image message content:', messageObj.content);
+                        // console.log('🖼️ Image message content:', messageObj.content);
                         
                         // Process image media with new MediaProcessor
                         try {
-                            console.log('📥 Processing image media...');
+                            // console.log('📥 Processing image media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.image.id);
                             
                             // Use new MediaProcessor
@@ -98,7 +98,7 @@ class MessageProcessor {
                                 metadata: mediaData.metadata
                             };
                             
-                            console.log('✅ Image media processed successfully:', mediaData.url);
+                            // console.log('✅ Image media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Image media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -110,11 +110,11 @@ class MessageProcessor {
                             mediaId: message.audio?.id,
                             mimeType: message.audio?.mime_type
                         };
-                        console.log('🔊 Audio message content:', messageObj.content);
+                        // console.log('🔊 Audio message content:', messageObj.content);
                         
                         // Process audio media with new MediaProcessor
                         try {
-                            console.log('📥 Processing audio media...');
+                            // console.log('📥 Processing audio media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.audio.id);
                             
                             // Use new MediaProcessor
@@ -135,7 +135,7 @@ class MessageProcessor {
                                 metadata: mediaData.metadata
                             };
                             
-                            console.log('✅ Audio media processed successfully:', mediaData.url);
+                            // console.log('✅ Audio media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Audio media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -148,11 +148,11 @@ class MessageProcessor {
                             mimeType: message.document?.mime_type,
                             filename: message.document?.filename
                         };
-                        console.log('📄 Document message content:', messageObj.content);
+                        // console.log('📄 Document message content:', messageObj.content);
                         
                         // Process document media with new MediaProcessor
                         try {
-                            console.log('📥 Processing document media...');
+                            // console.log('📥 Processing document media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.document.id);
                             
                             // Use original filename if available
@@ -178,7 +178,7 @@ class MessageProcessor {
                                 metadata: mediaData.metadata
                             };
                             
-                            console.log('✅ Document media processed successfully:', mediaData.url);
+                            // console.log('✅ Document media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Document media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -191,11 +191,11 @@ class MessageProcessor {
                             mimeType: message.video?.mime_type,
                             caption: message.video?.caption || ''
                         };
-                        console.log('🎥 Video message content:', messageObj.content);
+                        // console.log('🎥 Video message content:', messageObj.content);
                         
                         // Process video media with new MediaProcessor
                         try {
-                            console.log('📥 Processing video media...');
+                            // console.log('📥 Processing video media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.video.id);
                             
                             // Use new MediaProcessor
@@ -216,7 +216,7 @@ class MessageProcessor {
                                 metadata: mediaData.metadata
                             };
                             
-                            console.log('✅ Video media processed successfully:', mediaData.url);
+                            // console.log('✅ Video media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Video media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -228,11 +228,11 @@ class MessageProcessor {
                             mediaId: message.voice?.id,
                             mimeType: message.voice?.mime_type
                         };
-                        console.log('🎤 Voice message content:', messageObj.content);
+                        // console.log('🎤 Voice message content:', messageObj.content);
                         
                         // Process voice media with new MediaProcessor
                         try {
-                            console.log('📥 Processing voice media...');
+                            // console.log('📥 Processing voice media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.voice.id);
                             
                             // Use new MediaProcessor
@@ -253,7 +253,7 @@ class MessageProcessor {
                                 metadata: mediaData.metadata
                             };
                             
-                            console.log('✅ Voice media processed successfully:', mediaData.url);
+                            // console.log('✅ Voice media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Voice media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -265,11 +265,11 @@ class MessageProcessor {
                             mediaId: message.sticker?.id,
                             mimeType: message.sticker?.mime_type
                         };
-                        console.log('😄 Sticker message content:', messageObj.content);
+                        // console.log('😄 Sticker message content:', messageObj.content);
                         
                         // Process sticker media with new MediaProcessor
                         try {
-                            console.log('📥 Processing sticker media...');
+                            // console.log('📥 Processing sticker media...');
                             const downloadedMedia = await whatsappService.downloadMedia(message.sticker.id);
                             
                             // Use new MediaProcessor
@@ -290,7 +290,7 @@ class MessageProcessor {
                                 metadata: mediaData.metadata
                             };
                             
-                            console.log('✅ Sticker media processed successfully:', mediaData.url);
+                            // console.log('✅ Sticker media processed successfully:', mediaData.url);
                         } catch (error) {
                             console.error('❌ Sticker media processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -304,11 +304,11 @@ class MessageProcessor {
                             name: message.location?.name,
                             address: message.location?.address
                         };
-                        console.log('📍 Location message content:', messageObj.content);
+                        // console.log('📍 Location message content:', messageObj.content);
                         
                         // Process location data with LocationService (bypass media validation)
                         try {
-                            console.log('📥 Processing location data...');
+                            // console.log('📥 Processing location data...');
                             
                             // Use LocationService for location processing (no media validation)
                             mediaData = await LocationService.processLocation(
@@ -328,7 +328,7 @@ class MessageProcessor {
                                 metadata: mediaData.metadata
                             };
                             
-                            console.log('✅ Location data processed successfully');
+                            // console.log('✅ Location data processed successfully');
                         } catch (error) {
                             console.error('❌ Location processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -339,11 +339,11 @@ class MessageProcessor {
                         messageObj.content = {
                             contacts: message.contacts
                         };
-                        console.log('👥 Contact message content:', messageObj.content);
+                        // console.log('👥 Contact message content:', messageObj.content);
                         
                         // Process contact data with new MediaProcessor
                         try {
-                            console.log('📥 Processing contact data...');
+                            // console.log('📥 Processing contact data...');
                             
                             // Process each contact
                             const contactsData = [];
@@ -369,7 +369,7 @@ class MessageProcessor {
                                 }
                             };
                             
-                            console.log('✅ Contact data processed successfully');
+                            // console.log('✅ Contact data processed successfully');
                         } catch (error) {
                             console.error('❌ Contact processing failed:', error.message);
                             mediaProcessingError = error.message;
@@ -381,10 +381,23 @@ class MessageProcessor {
                         // console.log('❓ Unknown message type, storing raw:', messageObj.content);
                 }
                 
-                console.log('📝 Final message details:', JSON.stringify(messageObj, null, 2));
+                // console.log('📝 Final message details:', JSON.stringify(messageObj, null, 2));
+                
+                // PHASE 1: Check if user exists BEFORE storing anything
+                const whatsappId = messageObj.from;
+                const userExists = await databaseService.userService.findUserByWhatsappId(whatsappId);
+                const isNewUser = !userExists;
+                
+                // console.log('🔍 DEBUG - User existence check:', {
+                //     whatsappId,
+                //     userExists: !!userExists,
+                //     isNewUser,
+                //     decision: isNewUser ? 'WELCOME' : 'AI'
+                // });
                 
                 // Store message in database using existing processIncomingMessage method
-                console.log('💾 Storing message in database...');
+                // console.log('💾 Storing message in database...');
+                let result = null;
                 try {
                     const whatsappId = messageObj.from;
                     
@@ -475,7 +488,7 @@ class MessageProcessor {
                         // NEW: Add storage path to Firestore
                         if (messageObj.media.storagePath) {
                             messageData.storagePath = messageObj.media.storagePath;
-                            console.log('🔍 DEBUG: storagePath added to messageData:', messageData.storagePath);
+                            // console.log('🔍 DEBUG: storagePath added to messageData:', messageData.storagePath);
                         } else {
                             console.log('⚠️ DEBUG: messageObj.media.storagePath is missing or null');
                         }
@@ -485,36 +498,67 @@ class MessageProcessor {
                             messageData.mediaMetadata = messageObj.media.metadata;
                         }
                         
-                        console.log('📎 Enhanced media information added to database:', {
-                            url: messageObj.media.url,
-                            type: messageObj.media.type,
-                            storagePath: messageObj.media.storagePath,
-                            mimeType: messageObj.media.mimeType,
-                            messageDataStoragePath: messageData.storagePath // NEW: Debug log
-                        });
+                        // console.log('📎 Enhanced media information added to database:', {
+                        //     url: messageObj.media.url,
+                        //     type: messageObj.media.type,
+                        //     storagePath: messageObj.media.storagePath,
+                        //     mimeType: messageObj.media.mimeType,
+                        //     messageDataStoragePath: messageData.storagePath // NEW: Debug log
+                        // });
                         
-                        console.log('🔍 DEBUG: Full messageData being sent to database:', JSON.stringify(messageData, null, 2));
+                        // console.log('🔍 DEBUG: Full messageData being sent to database:', JSON.stringify(messageData, null, 2));
                     }
                     
-                    const result = await databaseService.processIncomingMessage(whatsappId, messageData);
-                    console.log('✅ Message stored successfully:', {
-                        user: result.user.whatsappId,
-                        totalMessages: result.user.totalMessageCount,
-                        processingTime: result.processingTimeMs + 'ms'
-                    });
+                    result = await databaseService.processIncomingMessage(whatsappId, messageData);
+                    // console.log('✅ Message stored successfully:', {
+                    //     user: result.user.whatsappId,
+                    //     totalMessages: result.user.totalMessageCount,
+                    //     processingTime: result.processingTimeMs + 'ms',
+                    //     isNewUser: result.isNewlyCreated
+                    // });
+                    
+                    // DEBUG: Confirm result is set correctly
+                    // console.log('🔍 DEBUG - Result assignment check:', {
+                    //     resultExists: !!result,
+                    //     isNewlyCreated: result?.isNewlyCreated,
+                    //     resultType: typeof result
+                    // });
                 } catch (dbError) {
                     console.error('❌ Database storage failed:', dbError.message);
+                    // console.log('🔍 DEBUG - Database error, result state:', {
+                    //     resultExists: !!result,
+                    //     errorType: dbError.constructor.name
+                    // });
                     // Continue processing even if DB fails
                 }
                 
-                // Process ALL text messages with AI (removed the @bert/@ai trigger requirement)
+                // Process ALL text messages - use PRE-CHECKED user existence flag
                 if (messageObj.type === 'text' && messageObj.content.text.trim()) {
-                    console.log('🤖 Triggering AI processing for text message...');
-                    // console.log('💬 Text content:', messageObj.content.text);
-                    await processor.processAIResponse(messageObj);
-                    console.log('✅ AI processing completed');
+                    // DEBUG: Log decision making process using PRE-CHECKED flag
+                    // console.log('🔍 DEBUG - Text processing decision (using pre-checked flag):', {
+                    //     hasResult: !!result,
+                    //     isNewUser: isNewUser,  // Use pre-checked flag, not result
+                    //     messageType: messageObj.type,
+                    //     textContent: messageObj.content?.text?.substring(0, 50) + '...',
+                    //     whatsappId: messageObj.from
+                    // });
+                    
+                    try {
+                        if (isNewUser) {
+                            // console.log('🆕 New user detected (pre-checked), sending welcome message...');
+                            await processor.processWelcomeResponse(messageObj);
+                        } else {
+                            // console.log('🤖 Existing user (pre-checked), triggering AI processing for text message...');
+                            await processor.processAIResponse(messageObj);
+                        }
+                        console.log('✅ Message processing completed');
+                    } catch (processingError) {
+                        console.error('❌ Message processing failed:', processingError.message);
+                        // Fallback to AI if there's any error
+                        await processor.processAIResponse(messageObj);
+                    }
                 } else if (messageObj.type !== 'text') {
-                    console.log(`📎 Non-text message received (${messageObj.type}), sending acknowledgment...`);
+                    // console.log(`📎 Non-text message received (${messageObj.type}), sending acknowledgment...`);
                     
                     let acknowledgmentText;
                     switch (messageObj.type) {
@@ -602,6 +646,51 @@ class MessageProcessor {
         return false;
     }
     
+    async processWelcomeResponse(messageObj) {
+        try {
+            console.log('👋 === WELCOME MESSAGE PROCESSING STARTED ===');
+            // console.log('🆕 Sending welcome message to new user...');
+            
+            const welcomeMessage = constants.WELCOME_MESSAGE.TEXT;
+            const whatsappResponse = await whatsappService.sendMessage(messageObj.from, welcomeMessage);
+            
+            console.log('✅ Welcome message sent via WhatsApp');
+            
+            // Store welcome message in database
+            if (whatsappResponse && whatsappResponse.messages && whatsappResponse.messages[0]) {
+                const welcomeMessageData = {
+                    whatsappMessageId: whatsappResponse.messages[0].id,
+                    textContent: welcomeMessage,
+                    timestamp: new Date()
+                };
+                
+                const auditData = {
+                    checkpointId: `welcome_${Date.now()}`,
+                    processingTimeMs: 100
+                };
+                
+                await databaseService.processOutgoingAiMessage(
+                    messageObj.from,
+                    welcomeMessageData,
+                    auditData
+                );
+                
+                // console.log('✅ Welcome message stored in database successfully');
+            } else {
+                console.error('⚠️ No message ID received from WhatsApp API for welcome message');
+            }
+            
+            console.log('👋 === WELCOME MESSAGE PROCESSING COMPLETE ===');
+            
+        } catch (error) {
+            console.warn('⚠️ Welcome message failed, falling back to AI:', error.message);
+            console.error('Welcome message error details:', error);
+            
+            // Fallback to AI response
+            await this.processAIResponse(messageObj);
+        }
+    }
+    
     async processAIResponse(messageObj) {
         try {
             console.log('🚨 === AI RESPONSE PROCESSING STARTED ===');
@@ -612,10 +701,10 @@ class MessageProcessor {
             const user = await databaseService.userService.findUserByWhatsappId(whatsappId);
             const conversationStatus = user?.conversationStatus || constants.CONVERSATION_STATUS.AI;
             
-            console.log('📊 Conversation Status:', conversationStatus);
-            if (user?.assignedLmId) {
-                console.log('👤 Assigned LM:', user.assignedLmId);
-            }
+            // console.log('📊 Conversation Status:', conversationStatus);
+            // if (user?.assignedLmId) {
+            //     console.log('👤 Assigned LM:', user.assignedLmId);
+            // }
             
             // Format phone number and get AI response
             const formattedPhone = this.aiService.formatPhoneNumber(whatsappId);
@@ -628,7 +717,7 @@ class MessageProcessor {
                 constants.MESSAGE_DIRECTION.INBOUND  // User message direction
             );
             
-            console.log('✅ AI service returned response');
+            // console.log('✅ AI service returned response');
             console.log('🎯 AI Response ready:', aiResponse);
             
             // ✅ Only send message to user if status is AI
@@ -640,7 +729,7 @@ class MessageProcessor {
                 // Store AI response in database
                 if (whatsappResponse && whatsappResponse.messages && whatsappResponse.messages[0]) {
                     const aiMessageId = whatsappResponse.messages[0].id;
-                    console.log('💾 Storing AI response in database...');
+                    // console.log('💾 Storing AI response in database...');
                     
                     try {
                         const aiAuditData = {
@@ -668,7 +757,7 @@ class MessageProcessor {
                 
             } else if (conversationStatus === constants.CONVERSATION_STATUS.HUMAN) {
                 console.log('� HUMAN mode active - AI context updated, no message sent to user');
-                console.log('⏳ Waiting for LM to respond manually...');
+                // console.log('⏳ Waiting for LM to respond manually...');
                 
                 // AI has updated its context but does NOT reply
                 // LM will handle the response manually via NOC dashboard

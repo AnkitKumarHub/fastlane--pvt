@@ -85,6 +85,13 @@ const messageSchema = new mongoose.Schema({
     trim: true
   },
   
+  assignedLmName: {
+    type: String,
+    default: null,
+    trim: true,
+    maxlength: 100
+  },
+  
   clientMessageId: {
     type: String,
     default: null,

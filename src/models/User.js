@@ -39,6 +39,13 @@ const userSchema = new mongoose.Schema({
     default: false
   },
 
+  lynnUserStatus: {
+    type: String,
+    default: "New User",
+    trim: true,
+    index: true
+  },
+
   displayName: {
     type: String,
     trim: true,
@@ -105,6 +112,12 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  
+  lastMessageUpdatedAt: {
+    type: Date,
+    default: Date.now,
+    index: true
   },
   
   // User message metrics (renamed from inboundMetrics)
@@ -224,6 +237,7 @@ userSchema.methods = {
       $set: {
         'userMetrics.lastMessage': lastMessage,
         'userMetrics.lastMessageTimestamp': new Date(),
+        'lastMessageUpdatedAt': new Date(),
         'updatedAt': new Date()
       }
     };
@@ -246,6 +260,7 @@ userSchema.methods = {
       $set: {
         'aiMetrics.lastMessage': lastMessage,
         'aiMetrics.lastMessageTimestamp': new Date(),
+        'lastMessageUpdatedAt': new Date(),
         'updatedAt': new Date()
       }
     };
@@ -268,6 +283,7 @@ userSchema.methods = {
       $set: {
         'lmMetrics.lastMessage': lastMessage,
         'lmMetrics.lastMessageTimestamp': new Date(),
+        'lastMessageUpdatedAt': new Date(),
         'updatedAt': new Date()
       }
     };

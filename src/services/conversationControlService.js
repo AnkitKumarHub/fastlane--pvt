@@ -38,11 +38,12 @@ class ConversationControlService {
       
       if (!user) {
         logger.info('ConversationControl', 'User not found, creating new user', { phoneNumber });
-        user = await userService.findOrCreateUser({
+        const userResult = await userService.findOrCreateUser({
           whatsappId: phoneNumber,
           phoneNumber: phoneNumber,
-          assignedToLm: false // Default value for new users
+          lastMessageUpdatedAt: new Date() // Initialize with current timestamp
         });
+        user = userResult.user;
       }
 
       // Check if already in HUMAN mode

@@ -191,11 +191,12 @@ class ConversationController {
     const startTime = Date.now();
     
     try {
-      const { phoneNumber, lmId, message, clientMessageId } = req.body;
+      const { phoneNumber, lmId, lmName, message, clientMessageId } = req.body;
 
       logger.api('POST', '/api/conversation/lm/send', { 
         phoneNumber, 
-        lmId, 
+        lmId,
+        lmName: lmName || 'Not provided',
         clientMessageId 
       });
 
@@ -306,7 +307,8 @@ class ConversationController {
             timestamp: new Date()
           },
           validatedData.clientMessageId,
-          validatedData.lmId
+          validatedData.lmId,
+          validatedData.lmName // Pass lmName to database service
         );
       } catch (dbError) {
         logger.error('ConversationController', `Database save failed: ${dbError.message}`, dbError);
@@ -341,6 +343,7 @@ class ConversationController {
       logger.success('ConversationController', 'LM message sent successfully', {
         phoneNumber: validatedData.phoneNumber,
         lmId: validatedData.lmId,
+        lmName: validatedData.lmName || 'Not provided',
         whatsappMessageId: whatsappMessageId,
         clientMessageId: validatedData.clientMessageId,
         processingTimeMs: totalTime

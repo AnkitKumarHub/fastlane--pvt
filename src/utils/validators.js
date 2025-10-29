@@ -287,7 +287,9 @@ class Validator {
       phoneNumber: this.sanitizeString(userData.phoneNumber),
       conversationStatus: userData.conversationStatus || constants.CONVERSATION_STATUS.AI,
       isActive: userData.isActive !== undefined ? Boolean(userData.isActive) : true,
-      assignedToLm: userData.assignedToLm !== undefined ? Boolean(userData.assignedToLm) : false
+      assignedToLm: userData.assignedToLm !== undefined ? Boolean(userData.assignedToLm) : false,
+      lynnUserStatus: userData.lynnUserStatus || "New User",
+      lastMessageUpdatedAt: userData.lastMessageUpdatedAt || new Date()
     };
   }
 
@@ -380,6 +382,17 @@ class Validator {
       errors.push('lmId must be a non-empty string');
     }
 
+    // Validate lmName (optional)
+    if (requestData.lmName !== undefined && requestData.lmName !== null) {
+      if (typeof requestData.lmName !== 'string') {
+        errors.push('lmName must be a string when provided');
+      } else if (requestData.lmName.trim().length === 0) {
+        errors.push('lmName cannot be empty when provided');
+      } else if (requestData.lmName.length > 100) {
+        errors.push('lmName cannot exceed 100 characters');
+      }
+    }
+
     // Validate message
     if (!requestData.message) {
       errors.push('message is required');
@@ -407,12 +420,19 @@ class Validator {
     }
 
     // Sanitize and return validated data
-    return {
+    const validatedData = {
       phoneNumber: this.sanitizeString(requestData.phoneNumber),
       lmId: this.sanitizeString(requestData.lmId, 50),
       message: this.sanitizeString(requestData.message, constants.WHATSAPP_LIMITS.MESSAGE_LENGTH),
       clientMessageId: this.sanitizeString(requestData.clientMessageId, this.patterns.CLIENT_MESSAGE_ID.MAX_LENGTH)
     };
+
+    // Add lmName if provided
+    if (requestData.lmName !== undefined && requestData.lmName !== null) {
+      validatedData.lmName = this.sanitizeString(requestData.lmName, 100);
+    }
+
+    return validatedData;
   }
 }
 

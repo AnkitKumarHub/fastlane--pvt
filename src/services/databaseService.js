@@ -62,6 +62,8 @@ class DatabaseService {
    * Process incoming WhatsApp message (complete workflow)
    */
   async processIncomingMessage(whatsappId, messageData, mediaFile = null) {
+    let userResult = null; // Declare at function scope for proper access
+    
     try {
       if (!this.isInitialized) {
         await this.initialize();
@@ -76,12 +78,21 @@ class DatabaseService {
       const startTime = Date.now();
 
       // 1. Find or create user
-      const user = await this.userService.findOrCreateUser({
+      userResult = await this.userService.findOrCreateUser({
         whatsappId,
         displayName: messageData.senderName || null,
         phoneNumber: messageData.phoneNumber || whatsappId, // Use whatsappId as phone number if not provided
-        assignedToLm: false // Default value for new users
+        lastMessageUpdatedAt: new Date() // Initialize with current timestamp
       });
+      const user = userResult.user;
+
+      // DEBUG: Log user creation result
+      // console.log('🔍 DEBUG - DatabaseService user creation result:', {
+      //   whatsappId,
+      //   isNewlyCreated: userResult.isNewlyCreated,
+      //   userId: user._id,
+      //   userExists: !!user
+      // });
 
       // 2. Handle media upload if present
       let mediaData = null;
@@ -105,7 +116,7 @@ class DatabaseService {
           metadata: messageData.mediaMetadata || null   // NEW: Include metadata
         };
         
-        console.log('🔍 DEBUG: mediaData created in databaseService:', JSON.stringify(mediaData, null, 2));
+        // console.log('🔍 DEBUG: mediaData created in databaseService:', JSON.stringify(mediaData, null, 2));
       }
 
       // 3. Prepare message data for storage
@@ -152,7 +163,8 @@ class DatabaseService {
         user: updatedUser,
         conversation,
         mediaData,
-        processingTimeMs: processingTime
+        processingTimeMs: processingTime,
+        isNewlyCreated: userResult ? userResult.isNewlyCreated : false // Safe access with fallback
       };
 
     } catch (error) {
@@ -239,7 +251,7 @@ class DatabaseService {
   /**
    * Process outgoing LM message (complete workflow with idempotency)
    */
-  async processOutgoingLmMessage(whatsappId, lmResponse, clientMessageId, lmId) {
+  async processOutgoingLmMessage(whatsappId, lmResponse, clientMessageId, lmId, lmName = null) {
     try {
       if (!this.isInitialized) {
         await this.initialize();
@@ -249,7 +261,8 @@ class DatabaseService {
         whatsappId,
         messageId: lmResponse.whatsappMessageId,
         clientMessageId,
-        lmId
+        lmId,
+        lmName: lmName || 'Not provided'
       });
 
       const startTime = Date.now();
@@ -289,7 +302,8 @@ class DatabaseService {
         timestamp: lmResponse.timestamp || new Date(),
         textContent: lmResponse.textContent || '',
         clientMessageId,
-        assignedLmId: lmId
+        assignedLmId: lmId,
+        assignedLmName: lmName // Add lmName to message storage
       };
 
       // 4. Add LM message to conversation
@@ -297,7 +311,8 @@ class DatabaseService {
         whatsappId,
         messageForStorage,
         clientMessageId,
-        lmId
+        lmId,
+        lmName
       );
 
       // 5. Update LM metrics

@@ -114,6 +114,12 @@ module.exports = {
     MAX_DOCUMENT_SIZE: 1048576 // 1MB per document
   },
 
+  // Welcome Message Configuration
+  WELCOME_MESSAGE: {
+    TEXT: "Hi, I'm Lynn — your personal concierge assistant, here to make everyday life simpler and beautifully organized.  I understand and research every detail before our concierge team takes it forward. How may I assist you today?",
+    ENABLED: true
+  },
+
   // AI Service Configuration
   AI_SERVICE: {
     TIMEOUT: 30000,               // 30 seconds

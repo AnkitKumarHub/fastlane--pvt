@@ -23,6 +23,7 @@ class MongoToFirestoreTransformer {
         conversationStatus: mongoUser.conversationStatus || 'AI',
         assignedLmId: mongoUser.assignedLmId || null,
         assignedToLm: mongoUser.assignedToLm !== undefined ? mongoUser.assignedToLm : false,
+        lynnUserStatus: mongoUser.lynnUserStatus || "New User",
         lastTakeover: mongoUser.lastTakeover ? {
           timestamp: mongoUser.lastTakeover.timestamp ? 
             admin.firestore.Timestamp.fromDate(mongoUser.lastTakeover.timestamp) : null,
@@ -37,6 +38,8 @@ class MongoToFirestoreTransformer {
         } : null,
         isActive: mongoUser.isActive !== undefined ? mongoUser.isActive : true,
         totalMessageCount: mongoUser.totalMessageCount || 0,
+        lastMessageUpdatedAt: mongoUser.lastMessageUpdatedAt ? 
+          admin.firestore.Timestamp.fromDate(mongoUser.lastMessageUpdatedAt) : admin.firestore.Timestamp.now(),
         userMetrics: {
           lastMessage: mongoUser.userMetrics?.lastMessage || '',
           lastMessageTimestamp: mongoUser.userMetrics?.lastMessageTimestamp ? 

@@ -206,7 +206,7 @@ class ConversationService {
   /**
    * Add LM message to conversation (with idempotency support)
    */
-  async addLmMessage(conversationId, messageData, clientMessageId, lmId) {
+  async addLmMessage(conversationId, messageData, clientMessageId, lmId, lmName = null) {
     try {
       validator.validateWhatsappId(conversationId);
       validator.validateClientMessageId(clientMessageId);
@@ -217,6 +217,7 @@ class ConversationService {
         direction: constants.MESSAGE_DIRECTION.OUTBOUND_LM,
         clientMessageId,
         assignedLmId: lmId,
+        assignedLmName: lmName, // Include lmName in message data
         timestamp: new Date()
       };
 
@@ -226,7 +227,8 @@ class ConversationService {
         conversationId,
         messageId: validatedMessageData.whatsappMessageId,
         clientMessageId,
-        lmId
+        lmId,
+        lmName: lmName || 'Not provided'
       });
 
       // Use upsert to create conversation if it doesn't exist
@@ -260,6 +262,7 @@ class ConversationService {
         messageId: validatedMessageData.whatsappMessageId,
         clientMessageId,
         lmId,
+        lmName: lmName || 'Not provided',
         totalMessages: updatedConversation.messages.length
       });
 

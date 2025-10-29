@@ -150,16 +150,16 @@ class AIService {
                                 // Collect content chunks but don't use them for final response
                             } else if (data.type === 'response_complete') {
                                 // This is the final response with complete content
-                                console.log('✅ Response complete received');
+                                // console.log('✅ Response complete received');
                                 if (data.data && data.data.content) {
                                     completeResponse = data.data.content;
-                                    console.log('📋 Complete response from data.data.content:', completeResponse);
+                                    // console.log('📋 Complete response from data.data.content:', completeResponse);
                                 } else if (data.content) {
                                     completeResponse = data.content;
-                                    console.log('📋 Complete response from data.content:', completeResponse);
+                                    // console.log('📋 Complete response from data.content:', completeResponse);
                                 }
                             } else {
-                                console.log(`ℹ️ Other chunk type: ${data.type}`, data);
+                                // console.log(`ℹ️ Other chunk type: ${data.type}`, data);
                             }
                             
                         } catch (parseError) {
@@ -176,7 +176,7 @@ class AIService {
                             }
                         }
                     } else if (trimmedLine && !trimmedLine.startsWith('data:')) {
-                        console.log('📄 Non-data line:', trimmedLine);
+                        // console.log('📄 Non-data line:', trimmedLine);
                     }
                 });
             });
@@ -199,7 +199,7 @@ class AIService {
                         .join('');
                     
                     if (contentChunks) {
-                        console.log('🔄 Using concatenated content chunks:', contentChunks);
+                        // console.log('🔄 Using concatenated content chunks:', contentChunks);
                         resolve(contentChunks);
                     } else {
                         console.warn('⚠️ No usable content found, using fallback');
