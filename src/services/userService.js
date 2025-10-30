@@ -562,6 +562,95 @@ class UserService {
       throw error;
     }
   }
+
+  /**
+   * Update Lynn user status (MongoDB only - for NOC sync)
+   */
+  async updateLynnUserStatus(whatsappId, lynnUserStatus) {
+    try {
+      validator.validateWhatsappId(whatsappId);
+      
+      if (!lynnUserStatus || typeof lynnUserStatus !== 'string') {
+        throw new Error('Valid lynnUserStatus is required');
+      }
+
+      // logger.database('UPDATE_LYNN_STATUS', this.modelName, { 
+      //   whatsappId, 
+      //   lynnUserStatus 
+      // });
+
+      const updatedUser = await User.findOneAndUpdate(
+        { whatsappId },
+        { 
+          $set: { 
+            lynnUserStatus: validator.sanitizeString(lynnUserStatus, 50),
+            // updatedAt: new Date()
+          }
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedUser) {
+        throw new Error(`User with WhatsApp ID ${whatsappId} not found`);
+      }
+
+      logger.success('UserService', `Lynn user status updated`, { 
+        whatsappId,
+        oldStatus: updatedUser.lynnUserStatus,
+        newStatus: lynnUserStatus
+      });
+
+      return updatedUser;
+
+    } catch (error) {
+      logger.error('UserService', `Failed to update Lynn user status: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update assigned to LM status (MongoDB only - for NOC sync)
+   */
+  async updateAssignedToLm(whatsappId, assignedToLm) {
+    try {
+      validator.validateWhatsappId(whatsappId);
+      
+      if (typeof assignedToLm !== 'boolean') {
+        throw new Error('assignedToLm must be a boolean value');
+      }
+
+      logger.database('UPDATE_ASSIGNED_LM', this.modelName, { 
+        whatsappId, 
+        assignedToLm 
+      });
+
+      const updatedUser = await User.findOneAndUpdate(
+        { whatsappId },
+        { 
+          $set: { 
+            assignedToLm: assignedToLm,
+            // updatedAt: new Date()
+          }
+        },
+        { new: true, runValidators: true }
+      );
+
+      if (!updatedUser) {
+        throw new Error(`User with WhatsApp ID ${whatsappId} not found`);
+      }
+
+      logger.success('UserService', `Assigned to LM status updated`, { 
+        whatsappId,
+        assignedToLm: updatedUser.assignedToLm
+      });
+
+      return updatedUser;
+
+    } catch (error) {
+      logger.error('UserService', `Failed to update assigned to LM status: ${error.message}`, error);
+      throw error;
+    }
+  }
 }
 
 // Create singleton instance
