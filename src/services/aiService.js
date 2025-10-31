@@ -240,7 +240,7 @@ class AIService {
         // For Indian numbers, we need only the last 10 digits
         if (cleaned.startsWith('91') && cleaned.length === 12) {
             // Remove the '91' country code, keep only last 10 digits
-            cleaned = cleaned.substring(2);
+             return cleaned = cleaned.substring(2);
             // console.log(`📱 Removed India country code (91): ${cleaned}`);
         } else if (cleaned.startsWith('1') && cleaned.length === 11) {
             // For US numbers, remove country code '1'

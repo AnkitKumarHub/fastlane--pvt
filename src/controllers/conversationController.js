@@ -53,10 +53,10 @@ class ConversationController {
         lmName
       );
 
-      logger.success('ConversationController', 'Takeover successful', {
-        phoneNumber,
-        lmId
-      });
+      // logger.success('ConversationController', 'Takeover successful', {
+      //   phoneNumber,
+      //   lmId
+      // });
 
       return res.status(200).json({
         success: true,
@@ -104,7 +104,7 @@ class ConversationController {
         });
       }
 
-      logger.api('POST', '/api/conversation/release', { phoneNumber, lmId });
+      // logger.api('POST', '/api/conversation/release', { phoneNumber, lmId });
 
       // Call service
       const result = await conversationControlService.release(
@@ -113,10 +113,10 @@ class ConversationController {
         lmName
       );
 
-      logger.success('ConversationController', 'Release successful', {
-        phoneNumber,
-        lmId
-      });
+      // logger.success('ConversationController', 'Release successful', {
+      //   phoneNumber,
+      //   lmId
+      // });
 
       return res.status(200).json({
         success: true,
@@ -268,15 +268,20 @@ class ConversationController {
 
       // Step 6: Async AI call (fire-and-forget for performance)
       // This keeps AI context updated without blocking the response
+      // Format phone number to remove country code (e.g., 91MobileNumber → MobileNumber)
+      const formattedPhoneNumber = aiService.formatPhoneNumber(validatedData.phoneNumber);
+      
+      console.log(`📱 Phone formatting for AI context: ${validatedData.phoneNumber} → ${formattedPhoneNumber}`);
+      
       aiService.sendMessageToAI(
         validatedData.message,
-        validatedData.phoneNumber,
+        formattedPhoneNumber,  // Use formatted phone number (consistent with normal conversation flow)
         constants.CONVERSATION_STATUS.HUMAN,
         constants.MESSAGE_DIRECTION.OUTBOUND_LM  // LM message direction
       ).catch(aiError => {
         logger.warn('ConversationController', 'Async AI context update failed (non-critical)', {
           phoneNumber: validatedData.phoneNumber,
-          error: aiError.message
+          error: aiError.message 
         });
         // Don't fail the request - AI context update is best-effort
       });
