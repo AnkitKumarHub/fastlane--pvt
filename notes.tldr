@@ -36,9 +36,9 @@
 		{
 			"id": "pointer:pointer",
 			"typeName": "pointer",
-			"x": 580.2805291353598,
-			"y": 2890.8064499032607,
-			"lastActivityTimestamp": 1761108754481,
+			"x": 230.76039999282943,
+			"y": 4966.107487226801,
+			"lastActivityTimestamp": 1762258062983,
 			"meta": {}
 		},
 		{
@@ -248,9 +248,9 @@
 			"typeName": "shape"
 		},
 		{
-			"x": 3951.3147717645124,
-			"y": 669.732715089496,
-			"z": 0.09886143184741969,
+			"x": 354.11101385453924,
+			"y": -4387.67738850991,
+			"z": 0.7762389975832849,
 			"meta": {},
 			"id": "camera:page:6JfI-SlVzjceK1Z5pVXX9",
 			"typeName": "camera"
@@ -2342,8 +2342,8 @@
 			"screenBounds": {
 				"x": 0,
 				"y": 0,
-				"w": 843,
-				"h": 588
+				"w": 902,
+				"h": 616
 			},
 			"insets": [
 				false,
@@ -2422,6 +2422,156 @@
 			"typeName": "shape"
 		},
 		{
+			"x": -298.7157037324316,
+			"y": 4796.056767782192,
+			"rotation": 0,
+			"isLocked": false,
+			"opacity": 1,
+			"meta": {},
+			"id": "shape:xn4f6ZRDD8kNCbFlOnaFs",
+			"type": "text",
+			"props": {
+				"color": "black",
+				"size": "m",
+				"w": 946.796875,
+				"font": "draw",
+				"textAlign": "start",
+				"autoSize": true,
+				"scale": 1,
+				"richText": {
+					"type": "doc",
+					"content": [
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "Blue tick + typing indicator "
+								}
+							]
+						},
+						{
+							"type": "heading",
+							"attrs": {
+								"dir": "auto",
+								"level": 2
+							},
+							"content": [
+								{
+									"type": "text",
+									"marks": [
+										{
+											"type": "bold"
+										}
+									],
+									"text": "Detailed Implementation Plan"
+								}
+							]
+						},
+						{
+							"type": "heading",
+							"attrs": {
+								"dir": "auto",
+								"level": 3
+							},
+							"content": [
+								{
+									"type": "text",
+									"marks": [
+										{
+											"type": "bold"
+										}
+									],
+									"text": "Flow for Every Message Type (Text + Media):"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "1. Webhook receives message"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "2. Immediately: Mark as Read + Show Typing Indicator (parallel execution)"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "3. Save message in database"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "4. Process message (AI/Welcome/Acknowledgment)"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "5. Wait for typing simulation (3 seconds)"
+								}
+							]
+						},
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "6. Send response (typing indicator auto-stops)"
+								},
+								{
+									"type": "hardBreak"
+								}
+							]
+						}
+					]
+				}
+			},
+			"parentId": "page:6JfI-SlVzjceK1Z5pVXX9",
+			"index": "aIc7oe9V",
+			"typeName": "shape"
+		},
+		{
 			"x": -276.13223428825575,
 			"y": 4236.953082346224,
 			"rotation": 0,
@@ -2446,10 +2596,12 @@
 			"typeName": "shape"
 		},
 		{
-			"editingShapeId": null,
+			"editingShapeId": "shape:xn4f6ZRDD8kNCbFlOnaFs",
 			"croppingShapeId": null,
-			"selectedShapeIds": [],
-			"hoveredShapeId": null,
+			"selectedShapeIds": [
+				"shape:xn4f6ZRDD8kNCbFlOnaFs"
+			],
+			"hoveredShapeId": "shape:xn4f6ZRDD8kNCbFlOnaFs",
 			"erasingShapeIds": [],
 			"hintingShapeIds": [],
 			"focusedGroupId": null,

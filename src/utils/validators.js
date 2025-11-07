@@ -338,7 +338,7 @@ class Validator {
     }
 
     // Sanitize and return validated data
-    return {
+    const validatedMessage = {
       whatsappMessageId: this.sanitizeString(messageData.whatsappMessageId),
       direction: messageData.direction,
       timestamp: messageData.timestamp ? new Date(messageData.timestamp) : new Date(),
@@ -355,6 +355,23 @@ class Validator {
         processingTimeMs: Number(messageData.aiAudit.processingTimeMs) || 0
       } : undefined
     };
+
+    // Preserve LM-specific fields that are critical for message tracking
+    if (messageData.assignedLmId !== undefined) {
+      validatedMessage.assignedLmId = this.sanitizeString(messageData.assignedLmId, 50);
+    }
+
+    if (messageData.assignedLmName !== undefined) {
+      validatedMessage.assignedLmName = messageData.assignedLmName !== null 
+        ? this.sanitizeString(messageData.assignedLmName, 100) 
+        : null;
+    }
+
+    if (messageData.clientMessageId !== undefined) {
+      validatedMessage.clientMessageId = this.sanitizeString(messageData.clientMessageId, this.patterns.CLIENT_MESSAGE_ID.MAX_LENGTH);
+    }
+
+    return validatedMessage;
   }
 
   /**
@@ -396,13 +413,8 @@ class Validator {
     // Validate message
     if (!requestData.message) {
       errors.push('message is required');
-    } else {
-      try {
-        this.validateTextContent(requestData.message);
-      } catch (error) {
-        errors.push(`message: ${error.message}`);
-      }
     }
+    // No length validation - let WhatsApp handle it
 
     // Validate clientMessageId
     if (!requestData.clientMessageId) {
@@ -423,14 +435,13 @@ class Validator {
     const validatedData = {
       phoneNumber: this.sanitizeString(requestData.phoneNumber),
       lmId: this.sanitizeString(requestData.lmId, 50),
-      message: this.sanitizeString(requestData.message, constants.WHATSAPP_LIMITS.MESSAGE_LENGTH),
-      clientMessageId: this.sanitizeString(requestData.clientMessageId, this.patterns.CLIENT_MESSAGE_ID.MAX_LENGTH)
+      message: requestData.message, // Send as-is - no sanitization, no length validation
+      clientMessageId: this.sanitizeString(requestData.clientMessageId, this.patterns.CLIENT_MESSAGE_ID.MAX_LENGTH),
+      // Always include lmName - use "NA" as default when not provided
+      lmName: (requestData.lmName !== undefined && requestData.lmName !== null) 
+        ? this.sanitizeString(requestData.lmName, 100)
+        : 'NA'
     };
-
-    // Add lmName if provided
-    if (requestData.lmName !== undefined && requestData.lmName !== null) {
-      validatedData.lmName = this.sanitizeString(requestData.lmName, 100);
-    }
 
     return validatedData;
   }

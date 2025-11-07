@@ -24,6 +24,13 @@ class FirestoreMessageService {
   }
 
   /**
+   * Check if Firestore Message Service is ready
+   */
+  isReady() {
+    return firestoreService.isReady();
+  }
+
+  /**
    * Sync multiple messages in batch for better performance
    */
   async syncMessagesBatch(whatsappId, mongoMessages) {
@@ -287,6 +294,87 @@ class FirestoreMessageService {
 
     } catch (error) {
       logger.warn('FirestoreMessageService', `Failed to archive old messages: ${error.message}`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Update message reaction in Firestore
+   */
+  async updateMessageReaction(conversationId, whatsappMessageId, reactionData) {
+    try {
+      if (!firestoreService.isReady()) {
+        logger.debug('FirestoreMessageService', 'Service not ready, skipping reaction update');
+        return null;
+      }
+
+      logger.info('FirestoreMessageService', 'Updating message reaction in Firestore', { 
+        conversationId,
+        whatsappMessageId,
+        hasReaction: !!reactionData
+      });
+
+      // Find the Firestore message document by WhatsApp message ID
+      const messages = await this.getFirestoreMessages(conversationId, 1000, whatsappMessageId);
+      
+      if (messages.length === 0) {
+        logger.debug('FirestoreMessageService', 'Message not found in Firestore for reaction update', { 
+          conversationId,
+          whatsappMessageId
+        });
+        return null;
+      }
+
+      // Update each matching message (should typically be just one)
+      const updatePromises = messages.map(async (message) => {
+        try {
+          const messageDocRef = firestoreConfig.getMessageDocRef(conversationId, message.id);
+          
+          // Prepare reaction update
+          const updateData = {
+            updatedAt: firestoreConfig.serverTimestamp()
+          };
+
+          if (reactionData && reactionData.emoji) {
+            // Add or update reaction
+            updateData.reaction = {
+              emoji: reactionData.emoji,
+              timestamp: reactionData.timestamp ? 
+                firestoreConfig.timestamp(reactionData.timestamp) : firestoreConfig.serverTimestamp(),
+              reactedBy: reactionData.reactedBy
+            };
+          } else {
+            // Remove reaction (set to null)
+            updateData.reaction = null;
+          }
+
+          await messageDocRef.update(updateData);
+          return message.id;
+        } catch (updateError) {
+          logger.error('FirestoreMessageService', `Failed to update individual message: ${updateError.message}`, updateError);
+          throw updateError;
+        }
+      });
+
+      const updatedIds = await Promise.all(updatePromises);
+
+      logger.success('FirestoreMessageService', 'Message reaction updated in Firestore', { 
+        conversationId,
+        whatsappMessageId,
+        updatedCount: updatedIds.length,
+        reactionEmoji: reactionData?.emoji || '[REMOVED]'
+      });
+
+      return { 
+        success: true, 
+        conversationId, 
+        whatsappMessageId, 
+        updatedCount: updatedIds.length,
+        reaction: reactionData
+      };
+
+    } catch (error) {
+      logger.warn('FirestoreMessageService', `Failed to update message reaction: ${error.message}`, error);
       return null;
     }
   }

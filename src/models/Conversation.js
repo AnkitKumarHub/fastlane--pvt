@@ -108,6 +108,20 @@ const messageSchema = new mongoose.Schema({
   aiAudit: {
     type: aiAuditSchema,
     default: undefined
+  },
+  
+  reaction: {
+    emoji: {
+      type: String,
+      trim: true
+    },
+    timestamp: {
+      type: Date
+    },
+    reactedBy: {
+      type: String,
+      trim: true
+    }
   }
 }, { _id: false });
 
@@ -149,6 +163,9 @@ conversationSchema.index({ conversationId: 1, 'messages.timestamp': -1 });
 conversationSchema.index({ 'messages.whatsappMessageId': 1 });
 conversationSchema.index({ 'messages.clientMessageId': 1 }, { unique: true, sparse: true });
 conversationSchema.index({ 'messages.direction': 1, 'messages.timestamp': -1 });
+conversationSchema.index({ 'messages.reaction.emoji': 1 });
+conversationSchema.index({ 'messages.reaction.timestamp': -1 });
+conversationSchema.index({ 'messages.reaction.reactedBy': 1 });
 conversationSchema.index({ createdAt: -1 });
 
 // Pre-save middleware

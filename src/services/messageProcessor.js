@@ -1,8 +1,10 @@
 const whatsappService = require('./whatsappService');
+const whatsappStatusService = require('./whatsappStatusService');
 const databaseService = require('./databaseService');
 const MediaProcessor = require('./mediaProcessor');
 const LocationService = require('./locationService');
 const aiService = require('./aiService');
+const ReactionService = require('./reactionService');
 const constants = require('../utils/constants');
 
 class MessageProcessor {
@@ -33,6 +35,26 @@ class MessageProcessor {
             for (const message of messages) {
                 console.log('🔄 === PROCESSING MESSAGE ===');
                 // console.log('📨 Current message:', JSON.stringify(message, null, 2));
+                
+                // ✅ STEP 1: IMMEDIATELY mark message as read and show typing indicator
+                // This provides instant user feedback before any processing
+                try {
+                    console.log('🔵 Marking message as read and showing typing indicator...');
+                    const statusResult = await whatsappStatusService.markMessageAsReadAndShowTyping(
+                        message.id, 
+                        message.from
+                    );
+                    
+                    if (statusResult.success) {
+                        console.log('✅ Combined operation successful - Read status + Typing indicator');
+                    } else {
+                        console.log('❌ Combined operation failed');
+                    }
+                } catch (statusError) {
+                    console.error('❌ Status operations failed:', statusError.message);
+                    console.log('🔄 Continuing with message processing despite status failure...');
+                }
+                
                 // Get contact information
                 const contact = contacts.find(c => c.wa_id === message.from);
                 // console.log('👤 Contact found:', contact ? JSON.stringify(contact, null, 2) : 'None');
@@ -375,6 +397,20 @@ class MessageProcessor {
                             mediaProcessingError = error.message;
                         }
                         break;
+                        
+                    case 'reaction':
+                        console.log('🎯 Reaction message detected, processing...');
+                        // Process reaction using ReactionService
+                        try {
+                            await ReactionService.processReaction(message);
+                            console.log('✅ Reaction processed successfully');
+                        } catch (error) {
+                            console.error('❌ Reaction processing failed:', error.message);
+                        }
+                        
+                        // Return early for reactions - no need to store as regular message
+                        console.log('🚨 === REACTION PROCESSING COMPLETE ===\n');
+                        return;
                         
                     default:
                         messageObj.content = { raw: message };

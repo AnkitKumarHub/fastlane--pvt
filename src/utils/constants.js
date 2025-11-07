@@ -47,6 +47,14 @@ module.exports = {
     LM: 'lm'          // LM responses
   },
 
+  // WhatsApp Status Operations
+  WHATSAPP_STATUS: {
+    READ_STATUS_ENABLED: true,
+    TYPING_INDICATOR_ENABLED: true,
+    MAX_TYPING_DURATION: 25000,  // Meta's maximum (25 seconds)
+    API_VERSION: 'v24.0'         // Required for status features
+  },
+
   // WhatsApp Limits
   WHATSAPP_LIMITS: {
     MESSAGE_LENGTH: 4096,
@@ -183,6 +191,10 @@ module.exports = {
     WHATSAPP_INVALID_MESSAGE: 'WHATSAPP_INVALID_MESSAGE',
     WHATSAPP_API_ERROR: 'WHATSAPP_API_ERROR',
     WHATSAPP_WEBHOOK_ERROR: 'WHATSAPP_WEBHOOK_ERROR',
+    
+    // WhatsApp Status Errors
+    WHATSAPP_READ_STATUS_FAILED: 'WHATSAPP_READ_STATUS_FAILED',
+    WHATSAPP_TYPING_INDICATOR_FAILED: 'WHATSAPP_TYPING_INDICATOR_FAILED',
     
     // AI Service Errors
     AI_SERVICE_TIMEOUT: 'AI_SERVICE_TIMEOUT',

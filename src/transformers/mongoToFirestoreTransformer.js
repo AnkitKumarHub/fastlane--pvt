@@ -82,6 +82,15 @@ class MongoToFirestoreTransformer {
         throw new Error('MongoDB message document is required');
       }
 
+      // Debug logging: Track input data
+      logger.debug('MongoToFirestoreTransformer', 'Transforming message for Firestore', {
+        whatsappMessageId: mongoMessage.whatsappMessageId,
+        direction: mongoMessage.direction,
+        lmName_input: mongoMessage.assignedLmName,
+        lmId_input: mongoMessage.assignedLmId,
+        clientMessageId_input: mongoMessage.clientMessageId
+      });
+
       const firestoreMessage = {
         whatsappMessageId: mongoMessage.whatsappMessageId, // Store WhatsApp ID as field
         direction: mongoMessage.direction,
@@ -89,6 +98,7 @@ class MongoToFirestoreTransformer {
           admin.firestore.Timestamp.fromDate(mongoMessage.timestamp) : admin.firestore.Timestamp.now(),
         textContent: mongoMessage.textContent || '',
         assignedLmId: mongoMessage.assignedLmId || null,  // LM assignment tracking
+        assignedLmName: mongoMessage.assignedLmName || null,  // LM name tracking - FIXED
         clientMessageId: mongoMessage.clientMessageId || null,  // Idempotency tracking
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now()
@@ -109,6 +119,16 @@ class MongoToFirestoreTransformer {
         console.log('🔍 DEBUG: mediaData transformed for Firestore:', JSON.stringify(firestoreMessage.mediaData, null, 2));
       }
 
+      // Add reaction if present
+      if (mongoMessage.reaction) {
+        firestoreMessage.reaction = {
+          emoji: mongoMessage.reaction.emoji,
+          timestamp: mongoMessage.reaction.timestamp ? 
+            admin.firestore.Timestamp.fromDate(mongoMessage.reaction.timestamp) : null,
+          reactedBy: mongoMessage.reaction.reactedBy
+        };
+      }
+
       // Add aiAudit if present (only for AI messages)
       if (mongoMessage.aiAudit) {
         firestoreMessage.aiAudit = {
@@ -118,7 +138,17 @@ class MongoToFirestoreTransformer {
       }
 
       // Clean null values for Firestore
-      return this.cleanForFirestore(firestoreMessage);
+      const cleanedMessage = this.cleanForFirestore(firestoreMessage);
+
+      // Debug logging: Track transformed output
+      logger.debug('MongoToFirestoreTransformer', 'Message transformation completed', {
+        whatsappMessageId: cleanedMessage.whatsappMessageId,
+        lmName_output: cleanedMessage.assignedLmName,
+        lmId_output: cleanedMessage.assignedLmId,
+        clientMessageId_output: cleanedMessage.clientMessageId
+      });
+
+      return cleanedMessage;
 
     } catch (error) {
       logger.error('MongoToFirestoreTransformer', `Failed to transform message: ${error.message}`, error);
@@ -285,6 +315,25 @@ class MongoToFirestoreTransformer {
     for (const field of requiredFields) {
       if (firestoreMessage[field] === undefined) {
         throw new Error(`Required field '${field}' is missing from Firestore message data`);
+      }
+    }
+
+    // Validate LM-specific fields if this is an LM message
+    if (firestoreMessage.direction === 'outbound_lm') {
+      if (firestoreMessage.assignedLmId === undefined) {
+        logger.warn('MongoToFirestoreTransformer', 'LM message missing assignedLmId field', {
+          whatsappMessageId: firestoreMessage.whatsappMessageId
+        });
+      }
+      if (firestoreMessage.assignedLmName === undefined) {
+        logger.warn('MongoToFirestoreTransformer', 'LM message missing assignedLmName field', {
+          whatsappMessageId: firestoreMessage.whatsappMessageId
+        });
+      }
+      if (firestoreMessage.clientMessageId === undefined) {
+        logger.warn('MongoToFirestoreTransformer', 'LM message missing clientMessageId field', {
+          whatsappMessageId: firestoreMessage.whatsappMessageId
+        });
       }
     }
 

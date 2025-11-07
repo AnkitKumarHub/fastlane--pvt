@@ -221,7 +221,23 @@ class ConversationService {
         timestamp: new Date()
       };
 
+      // Debug logging: Track data before validation
+      logger.debug('ConversationService', 'LM message data before validation', {
+        conversationId,
+        lmName_beforeValidation: lmMessageData.assignedLmName,
+        assignedLmId_beforeValidation: lmMessageData.assignedLmId,
+        clientMessageId_beforeValidation: lmMessageData.clientMessageId
+      });
+
       const validatedMessageData = validator.validateMessageInput(lmMessageData);
+
+      // Debug logging: Track data after validation
+      logger.debug('ConversationService', 'LM message data after validation', {
+        conversationId,
+        lmName_afterValidation: validatedMessageData.assignedLmName,
+        assignedLmId_afterValidation: validatedMessageData.assignedLmId,
+        clientMessageId_afterValidation: validatedMessageData.clientMessageId
+      });
 
       logger.database('ADD_LM_MESSAGE', this.modelName, { 
         conversationId,
@@ -387,6 +403,137 @@ class ConversationService {
 
     } catch (error) {
       logger.error('ConversationService', `Failed to archive old messages: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Find message by WhatsApp message ID across all conversations
+   */
+  async findMessageByWhatsappId(whatsappMessageId) {
+    try {
+      logger.debug('ConversationService', 'Searching for message by WhatsApp ID', { whatsappMessageId });
+
+      // Use MongoDB aggregation to search across all conversations
+      const result = await Conversation.aggregate([
+        { $match: { 'messages.whatsappMessageId': whatsappMessageId } },
+        { $unwind: { path: '$messages', includeArrayIndex: 'messageIndex' } },
+        { $match: { 'messages.whatsappMessageId': whatsappMessageId } },
+        { 
+          $project: {
+            conversationId: 1,
+            messageIndex: 1,
+            message: '$messages'
+          }
+        },
+        { $limit: 1 }
+      ]);
+
+      if (result.length === 0) {
+        logger.debug('ConversationService', 'Message not found', { whatsappMessageId });
+        return null;
+      }
+
+      const foundMessage = result[0];
+      logger.debug('ConversationService', 'Message found', { 
+        conversationId: foundMessage.conversationId,
+        messageIndex: foundMessage.messageIndex,
+        whatsappMessageId
+      });
+
+      return {
+        conversationId: foundMessage.conversationId,
+        messageIndex: foundMessage.messageIndex,
+        message: foundMessage.message
+      };
+
+    } catch (error) {
+      logger.error('ConversationService', `Failed to find message by WhatsApp ID: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update message reaction by conversation ID and message index
+   */
+  async updateMessageReaction(conversationId, messageIndex, reactionData) {
+    try {
+      validator.validateWhatsappId(conversationId);
+
+      logger.debug('ConversationService', 'Updating message reaction', { 
+        conversationId,
+        messageIndex,
+        hasReaction: !!reactionData
+      });
+
+      // Build update query - Fixed structure
+      let updateOperation;
+      
+      if (reactionData && reactionData.emoji) {
+        // Add or update reaction
+        updateOperation = {
+          $set: {
+            [`messages.${messageIndex}.reaction`]: {
+              emoji: reactionData.emoji,
+              timestamp: reactionData.timestamp,
+              reactedBy: reactionData.reactedBy
+            },
+            lastUpdated: new Date()
+          }
+        };
+      } else {
+        // Remove reaction
+        updateOperation = {
+          $unset: { [`messages.${messageIndex}.reaction`]: 1 },
+          $set: { lastUpdated: new Date() }
+        };
+      }
+
+      const conversation = await Conversation.findOneAndUpdate(
+        { conversationId },
+        updateOperation,
+        { new: true }
+      );
+
+      if (!conversation) {
+        throw new Error(`Conversation with ID ${conversationId} not found`);
+      }
+
+      const updatedMessage = conversation.messages[messageIndex];
+      
+      // Verify the reaction was actually updated
+      if (reactionData && reactionData.emoji) {
+        if (!updatedMessage.reaction || updatedMessage.reaction.emoji !== reactionData.emoji) {
+          logger.error('ConversationService', 'Reaction update verification failed', {
+            expected: reactionData.emoji,
+            actual: updatedMessage.reaction?.emoji || '[NONE]'
+          });
+          throw new Error('Reaction update verification failed');
+        }
+      } else {
+        if (updatedMessage.reaction) {
+          logger.error('ConversationService', 'Reaction removal verification failed', {
+            actualReaction: updatedMessage.reaction
+          });
+          throw new Error('Reaction removal verification failed');
+        }
+      }
+      
+      logger.success('ConversationService', 'Message reaction updated successfully', {
+        conversationId,
+        messageIndex,
+        whatsappMessageId: updatedMessage.whatsappMessageId,
+        reactionEmoji: updatedMessage.reaction?.emoji || '[REMOVED]'
+      });
+
+      return {
+        conversation,
+        message: updatedMessage,
+        whatsappMessageId: updatedMessage.whatsappMessageId
+      };
+
+    } catch (error) {
+      logger.error('ConversationService', `Failed to update message reaction: ${error.message}`, error);
       throw error;
     }
   }

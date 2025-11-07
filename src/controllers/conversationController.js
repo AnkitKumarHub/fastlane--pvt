@@ -196,14 +196,26 @@ class ConversationController {
       logger.api('POST', '/api/conversation/lm/send', { 
         phoneNumber, 
         lmId,
-        lmName: lmName || 'Not provided',
-        clientMessageId 
+        clientMessageId,
+        lmName_rawInput: {
+          provided: 'lmName' in req.body,
+          value: lmName,
+          type: typeof lmName
+        }
       });
 
       // Step 1: Validate request body
       let validatedData;
       try {
         validatedData = validator.validateLmMessage(req.body);
+        
+        // Enhanced logging: Track validation result for lmName
+        logger.debug('ConversationController', 'LM message validation completed', {
+          phoneNumber: validatedData.phoneNumber,
+          lmName_afterValidation: validatedData.lmName,
+          lmName_isDefault: validatedData.lmName === 'NA'
+        });
+        
       } catch (validationError) {
         logger.warn('ConversationController', `LM message validation failed: ${validationError.message}`);
         return res.status(400).json({
@@ -304,6 +316,14 @@ class ConversationController {
 
       let dbResult;
       try {
+        // Enhanced logging: Track what's being saved to database
+        logger.debug('ConversationController', 'Saving LM message to database', {
+          phoneNumber: validatedData.phoneNumber,
+          lmId: validatedData.lmId,
+          lmName_toStore: validatedData.lmName,
+          clientMessageId: validatedData.clientMessageId
+        });
+        
         dbResult = await databaseService.processOutgoingLmMessage(
           validatedData.phoneNumber,
           {
@@ -313,7 +333,7 @@ class ConversationController {
           },
           validatedData.clientMessageId,
           validatedData.lmId,
-          validatedData.lmName // Pass lmName to database service
+          validatedData.lmName // This will now always be either actual name or 'NA'
         );
       } catch (dbError) {
         logger.error('ConversationController', `Database save failed: ${dbError.message}`, dbError);
@@ -348,7 +368,7 @@ class ConversationController {
       logger.success('ConversationController', 'LM message sent successfully', {
         phoneNumber: validatedData.phoneNumber,
         lmId: validatedData.lmId,
-        lmName: validatedData.lmName || 'Not provided',
+        lmName: validatedData.lmName,  // Always has a value now (either actual name or 'NA')
         whatsappMessageId: whatsappMessageId,
         clientMessageId: validatedData.clientMessageId,
         processingTimeMs: totalTime

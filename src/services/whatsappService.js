@@ -130,6 +130,124 @@ class WhatsAppService {
     }
 
     /**
+     * Mark a message as read and show typing indicator (combined operation)
+     * Uses Meta's v24.0+ combined API format for best performance
+     * @param {string} messageId - WhatsApp message ID
+     * @param {string} phoneNumber - Recipient phone number (for logging)
+     * @returns {Promise<Object>} - API response
+     */
+    static async markMessageAsReadAndShowTyping(messageId, phoneNumber) {
+        try {
+            console.log(`🔵 Combined operation: Marking message ${messageId} as read + showing typing to ${phoneNumber}`);
+            
+            const url = `https://graph.facebook.com/v24.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+            
+            const payload = {
+                messaging_product: "whatsapp",
+                status: "read",
+                message_id: messageId,
+                typing_indicator: { type: "text" }
+            };
+            
+            const config = {
+                headers: {
+                    'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            const response = await axios.post(url, payload, config);
+            console.log(`✅ Combined operation successful for message ${messageId}`);
+            return response.data;
+            
+        } catch (error) {
+            console.error(`❌ Combined operation failed for message ${messageId}:`, error.message);
+            if (error.response) {
+                console.error('Combined API Error:', error.response.data);
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Mark a message as read (blue tick for user)
+     * @param {string} messageId - WhatsApp message ID
+     * @returns {Promise<Object>} - API response
+     */
+    static async markMessageAsRead(messageId) {
+        try {
+            console.log(`📖 Marking message as read: ${messageId}`);
+            
+            const url = `https://graph.facebook.com/v24.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+            
+            const payload = {
+                messaging_product: "whatsapp",
+                status: "read",
+                message_id: messageId
+            };
+            
+            const config = {
+                headers: {
+                    'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            const response = await axios.post(url, payload, config);
+            console.log(`✅ Message ${messageId} marked as read`);
+            return response.data;
+            
+        } catch (error) {
+            console.error(`❌ Failed to mark message ${messageId} as read:`, error.message);
+            if (error.response) {
+                console.error('Read Status Error:', error.response.data);
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Show typing indicator to user
+     * @param {string} phoneNumber - Recipient phone number
+     * @returns {Promise<Object>} - API response
+     */
+    static async showTypingIndicator(phoneNumber) {
+        try {
+            console.log(`⌨️ Showing typing indicator to: ${phoneNumber}`);
+            
+            const url = `https://graph.facebook.com/v24.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
+            
+            const payload = {
+                messaging_product: "whatsapp",
+                recipient_type: "individual",
+                to: phoneNumber,
+                type: "typing",
+                typing: {
+                    action: "typing_on"
+                }
+            };
+            
+            const config = {
+                headers: {
+                    'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+            
+            const response = await axios.post(url, payload, config);
+            console.log(`✅ Typing indicator shown to ${phoneNumber}`);
+            return response.data;
+            
+        } catch (error) {
+            console.error(`❌ Failed to show typing indicator to ${phoneNumber}:`, error.message);
+            if (error.response) {
+                console.error('Typing Indicator Error:', error.response.data);
+            }
+            throw error;
+        }
+    }
+
+    /**
      * Get file extension from MIME type
      * @param {string} mimeType - MIME type
      * @returns {string} - File extension

@@ -506,6 +506,71 @@ class DatabaseService {
     }
   }
 
+  /**
+   * Find message by WhatsApp message ID across all conversations
+   */
+  async findMessageByWhatsappId(whatsappMessageId) {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      logger.debug('DatabaseService', 'Finding message by WhatsApp ID', { whatsappMessageId });
+
+      const result = await this.conversationService.findMessageByWhatsappId(whatsappMessageId);
+      
+      if (result) {
+        logger.debug('DatabaseService', 'Message found', { 
+          conversationId: result.conversationId,
+          messageIndex: result.messageIndex
+        });
+        return result;
+      }
+
+      logger.debug('DatabaseService', 'Message not found', { whatsappMessageId });
+      return null;
+
+    } catch (error) {
+      logger.error('DatabaseService', `Failed to find message: ${error.message}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update message with reaction data
+   */
+  async updateMessageReaction(conversationId, messageIndex, reactionData) {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      logger.debug('DatabaseService', 'Updating message reaction', { 
+        conversationId,
+        messageIndex,
+        hasReaction: !!reactionData
+      });
+
+      const result = await this.conversationService.updateMessageReaction(
+        conversationId,
+        messageIndex,
+        reactionData
+      );
+
+      if (result) {
+        logger.success('DatabaseService', 'Message reaction updated successfully');
+        return result;
+      }
+
+      logger.warn('DatabaseService', 'Failed to update message reaction');
+      return null;
+
+    } catch (error) {
+      logger.error('DatabaseService', `Failed to update message reaction: ${error.message}`, error);
+      throw error;
+    }
+  }
+
   // static async getMessages(phoneNumber, limit = 50) {
   //   const service = new DatabaseService();
   //   try {
